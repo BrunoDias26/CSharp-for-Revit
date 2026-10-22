@@ -1,0 +1,5 @@
+[*.cs]
+# Folders organize the files (Utilities/Enums, Utilities/Data), but the namespace stays
+# CSharp_for_Revit.Utilities, so no command needs extra "using" lines. Decision of 2026-10-19.
+# This turns off IDE0130 ("namespace does not match folder structure").
+dotnet_style_namespace_match_folder = false

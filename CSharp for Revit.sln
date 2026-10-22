@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37314.3 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp for Revit", "CSharp for Revit\CSharp for Revit.csproj", "{A193C34B-6788-4021-8429-30E5D13748F2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug.R23|Any CPU = Debug.R23|Any CPU
+		Debug.R24|Any CPU = Debug.R24|Any CPU
+		Debug.R25|Any CPU = Debug.R25|Any CPU
+		Debug.R26|Any CPU = Debug.R26|Any CPU
+		Debug.R27|Any CPU = Debug.R27|Any CPU
+		Release.R23|Any CPU = Release.R23|Any CPU
+		Release.R24|Any CPU = Release.R24|Any CPU
+		Release.R25|Any CPU = Release.R25|Any CPU
+		Release.R26|Any CPU = Release.R26|Any CPU
+		Release.R27|Any CPU = Release.R27|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R23|Any CPU.ActiveCfg = Debug.R23|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R23|Any CPU.Build.0 = Debug.R23|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R24|Any CPU.ActiveCfg = Debug.R24|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R24|Any CPU.Build.0 = Debug.R24|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R25|Any CPU.ActiveCfg = Debug.R25|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R25|Any CPU.Build.0 = Debug.R25|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R26|Any CPU.ActiveCfg = Debug.R26|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R26|Any CPU.Build.0 = Debug.R26|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R27|Any CPU.ActiveCfg = Debug.R27|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Debug.R27|Any CPU.Build.0 = Debug.R27|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R23|Any CPU.ActiveCfg = Release.R23|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R23|Any CPU.Build.0 = Release.R23|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R24|Any CPU.ActiveCfg = Release.R24|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R24|Any CPU.Build.0 = Release.R24|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R25|Any CPU.ActiveCfg = Release.R25|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R25|Any CPU.Build.0 = Release.R25|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R26|Any CPU.ActiveCfg = Release.R26|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R26|Any CPU.Build.0 = Release.R26|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R27|Any CPU.ActiveCfg = Release.R27|Any CPU
+		{A193C34B-6788-4021-8429-30E5D13748F2}.Release.R27|Any CPU.Build.0 = Release.R27|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D3D5FF93-DC3E-47DD-8673-CB4D23476DC0}
+	EndGlobalSection
+EndGlobal

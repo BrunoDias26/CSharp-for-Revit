@@ -1,0 +1,14 @@
+<RevitAddIns>
+    <AddIn Type="Application">
+        <Name>CSharp for Revit</Name>
+        <Assembly>CSharp for Revit\CSharp for Revit.dll</Assembly>
+        <AddInId>9699F8D5-7F3C-467F-AC8B-F1695DECC5BC</AddInId>
+        <FullClassName>CSharp_for_Revit.Application</FullClassName>
+        <VendorId>Development</VendorId>
+        <VendorDescription></VendorDescription>
+    </AddIn>
+    <ManifestSettings>
+        <UseRevitContext>False</UseRevitContext>
+        <ContextName>CSharp for Revit</ContextName>
+    </ManifestSettings>
+</RevitAddIns>
