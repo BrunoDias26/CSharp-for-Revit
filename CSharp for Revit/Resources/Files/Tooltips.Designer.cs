@@ -162,7 +162,7 @@ namespace CSharp_for_Revit.Resources.Files {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Test version: creates stacked baseline dimensions for the vertical fabrication pipes....
+        ///   Looks up a localized string similar to Test (creates nothing): draw a line (horizontal or vertical) and a read window....
         /// </summary>
         internal static string Dimension1_Button {
             get {

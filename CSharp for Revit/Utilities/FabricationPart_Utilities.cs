@@ -238,6 +238,45 @@ namespace CSharp_for_Revit.Utilities
         }
 
         /// <summary>
+        /// Keeps only the parts that touch a window drawn on the screen (e.g. LineWindowResult).
+        /// The window is aligned with the screen, so "touches" = the X ranges overlap AND the Y ranges overlap.
+        /// For vertical / horizontal pipes and risers this is exact (their own "box" is the pipe itself).
+        /// </summary>
+        /// <param name="infos">The record cards.</param>
+        /// <param name="windowMinInView">Window corner with the smallest X and Y, in screen coordinates (feet).</param>
+        /// <param name="windowMaxInView">Window corner with the largest X and Y, in screen coordinates (feet).</param>
+        /// <returns>The parts that touch the window (empty if any argument is null).</returns>
+        public static List<FabPartInfo> FilterByWindow(List<FabPartInfo> infos, XYZ windowMinInView, XYZ windowMaxInView)
+        {
+            var touching = new List<FabPartInfo>();
+
+            if (infos is null || windowMinInView is null || windowMaxInView is null) { return touching; }
+
+            foreach (var info in infos)
+            {
+                // Parts without 2 ends have no points on the screen
+                if (info.StartPointInView is null || info.EndPointInView is null) { continue; }
+
+                // The part's ranges on the screen
+                var partMinX = Math.Min(info.StartPointInView.X, info.EndPointInView.X);
+                var partMaxX = Math.Max(info.StartPointInView.X, info.EndPointInView.X);
+                var partMinY = Math.Min(info.StartPointInView.Y, info.EndPointInView.Y);
+                var partMaxY = Math.Max(info.StartPointInView.Y, info.EndPointInView.Y);
+
+                // Two ranges overlap when each one starts before the other ends
+                var touchesInX = partMaxX >= windowMinInView.X && partMinX <= windowMaxInView.X;
+                var touchesInY = partMaxY >= windowMinInView.Y && partMinY <= windowMaxInView.Y;
+
+                if (touchesInX == true && touchesInY == true)
+                {
+                    touching.Add(info);
+                }
+            }
+
+            return touching;
+        }
+
+        /// <summary>
         /// Keeps only the cards with one orientation (e.g. only the vertical pipes).
         /// </summary>
         /// <param name="infos">The record cards.</param>

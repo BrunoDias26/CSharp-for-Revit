@@ -236,6 +236,33 @@ namespace CSharp_for_Revit.Forms
         }
 
         /// <summary>
+        /// Opens the line + window overlay (WPF) over a screen rectangle: 3 clicks with live preview.
+        /// Clicks 1-2 draw a line locked to horizontal or vertical; click 3 sets the read window. Esc cancels.
+        /// </summary>
+        /// <param name="screenLeft">Left edge of the area, physical screen pixels.</param>
+        /// <param name="screenTop">Top edge, physical screen pixels.</param>
+        /// <param name="screenRight">Right edge, physical screen pixels.</param>
+        /// <param name="screenBottom">Bottom edge, physical screen pixels.</param>
+        /// <param name="ownerHandle">The window the overlay belongs to (e.g. Revit's main window).</param>
+        /// <returns>A FormResult. Objects = 3 System.Windows.Point in physical screen pixels:
+        /// line start, line end (already locked), window extent.</returns>
+        public static FormResult PickLineWithWindow(int screenLeft, int screenTop, int screenRight, int screenBottom, IntPtr ownerHandle)
+        {
+            var formResult = new FormResult(isValid: false);
+
+            // WPF windows are not IDisposable, so no "using" here (unlike the WinForms forms)
+            var overlay = new Bases.BaseLineOverlay(screenLeft, screenTop, screenRight, screenBottom, ownerHandle);
+
+            // ShowDialog in WPF returns bool? (true, false or null): only true means "finished"
+            if (overlay.ShowDialog() == true)
+            {
+                formResult.Validate(overlay.Tag as List<object>);
+            }
+
+            return formResult;
+        }
+
+        /// <summary>
         /// Processes a Completed form.
         /// </summary>
         /// <param name="message">An optional message.</param>

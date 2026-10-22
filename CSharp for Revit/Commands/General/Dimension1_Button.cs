@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
 using CSharp_for_Revit.Forms;
@@ -7,23 +6,16 @@ using CSharp_for_Revit.Utilities;
 namespace CSharp_for_Revit.Commands.General
 {
     /// <summary>
-    /// Stacked baseline dimensions, first test version: only the dimensions that measure X, for VERTICAL pipes
-    /// and RISERS (horizontal pipes are ignored for now); dimension line placed over the pipes (position not refined yet).
-    /// Input: only fabrication pipes (CID 2041): the ones in the selection, or, if nothing is selected,
-    /// all the pipes of the active view.
+    /// Stacked dimensions, step 1 of the user interaction (TEST: creates nothing in the model):
+    /// the user draws a line (locked H/V) and a read window over the active view, and the command
+    /// selects the fabrication pipes (CID 2041) that the dimensions would use.
+    /// Horizontal line = dimensions that measure X (vertical pipes + risers);
+    /// vertical line = dimensions that measure Y (horizontal pipes + risers).
+    /// The version that creates the dimensions is in git (commit 9980b8a) and comes back in step 2.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     public class Dimension1_Button : IExternalCommand
     {
-        // Dimension type used for piping (CTS standard, sheet M-L1-SD-C1)
-        private const string DIMENSION_TYPE_NAME = "CTS - Linear - 3/32\" Arial - Line Leader - Inline Text BASELINE";
-
-        // Two pipes closer than this along the measured axis get one witness line only
-        private const double MERGE_TOLERANCE_INCHES = 1.0;
-
-        // A pipe closer than this to its grid is not dimensioned (the value would show ~0)
-        private const double MIN_DISTANCE_TO_GRID_INCHES = 0.125;
-
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             // Collect the document
@@ -32,115 +24,88 @@ namespace CSharp_for_Revit.Commands.General
             Document doc = uiDoc.Document;
             var activeView = uiDoc.ActiveGraphicalView;
 
-            // Dimension type first: without it there is nothing to do
-            var dimensionType = Dimension_Utilities.GetDimensionTypeByName(doc, DIMENSION_TYPE_NAME);
+            // Ask for the line and the read window (3 clicks, Esc cancels)
+            var pick = UIDocument_Utilities.PickLineWithWindow(uiDoc);
+            if (pick.Cancelled) { return Result.Cancelled; }
 
-            if (dimensionType is null)
-            {
-                return Custom.Cancelled($"Dimension type not found in this model:\n{DIMENSION_TYPE_NAME}");
-            }
-
-            // Input: which pipes? Something selected = only the pipes in the selection;
-            // nothing selected = all the pipes of the active view
+            // Record cards of all the pipes of the view
             var pipeCids = new List<FabricationCid>() { FabricationCid.Pipe };
-            var selectedElements = UIDocument_Utilities.GetSelectedElements(uiDoc);
+            var parts = FabricationPart_Utilities.GetFabricationParts(doc, activeView, pipeCids);
+            var infos = FabricationPart_Utilities.GetFabPartInfos(parts, activeView);
 
-            List<FabricationPart> parts;
-            string source;
+            // The line decides which pipes count: the ones perpendicular to it, plus the risers
+            OrientationInView pipeOrientation;
+            string measuredAxis;
 
-            if (selectedElements.Count > 0)
+            if (pick.LineOrientation == OrientationInView.Horizontal)
             {
-                parts = FabricationPart_Utilities.FilterFabricationParts(selectedElements, pipeCids);
-                source = $"selection ({selectedElements.Count} elements selected, {parts.Count} are pipes)";
+                pipeOrientation = OrientationInView.Vertical;
+                measuredAxis = "X";
             }
             else
             {
-                parts = FabricationPart_Utilities.GetFabricationParts(doc, activeView, pipeCids);
-                source = "all pipes (CID 2041) in the active view";
+                pipeOrientation = OrientationInView.Horizontal;
+                measuredAxis = "Y";
             }
 
-            // A selection without pipes does not fall back to the whole view: the user chose those elements
-            if (parts.Count == 0)
-            {
-                return Custom.Cancelled($"No fabrication pipes (CID 2041) found. Source: {source}.");
-            }
+            var candidates = new List<FabPartInfo>();
+            candidates.AddRange(FabricationPart_Utilities.FilterByOrientation(infos, pipeOrientation));
+            candidates.AddRange(FabricationPart_Utilities.FilterByOrientation(infos, OrientationInView.Riser));
 
-            // Record cards, split by orientation
-            var infos = FabricationPart_Utilities.GetFabPartInfos(parts, activeView);
-            var verticals = FabricationPart_Utilities.FilterByOrientation(infos, OrientationInView.Vertical);
-            var risers = FabricationPart_Utilities.FilterByOrientation(infos, OrientationInView.Riser);
-            var horizontalCount = FabricationPart_Utilities.FilterByOrientation(infos, OrientationInView.Horizontal).Count;
+            // The window decides which of them are read
+            var touching = FabricationPart_Utilities.FilterByWindow(candidates, pick.WindowMinInView, pick.WindowMaxInView);
 
-            // These dimensions measure X: vertical pipes AND risers (a riser is a point in plan, so it has an X too)
-            var measuredByX = new List<FabPartInfo>();
-            measuredByX.AddRange(verticals);
-            measuredByX.AddRange(risers);
+            // Select them, so they light up in blue (FabricationPart -> Element: Cast, because of the list types)
+            var touchingElements = touching
+                .Select(i => i.Part)
+                .Cast<Element>()
+                .ToList();
 
-            // One witness line per X position (a riser and a vertical pipe at the same X share one)
-            var uniqueByX = FabricationPart_Utilities.RemoveClosePositions(measuredByX, OrientationInView.Vertical, MERGE_TOLERANCE_INCHES / 12.0);
+            UIDocument_Utilities.SelectElements(uiDoc, touchingElements);
 
-            // Ladders: same nearest vertical grid + same side = one baseline dimension
-            var grids = Grid_Utilities.GetGrids(doc, activeView);
-            var ladders = Dimension_Utilities.GetLadders(uniqueByX, grids, activeView, OrientationInView.Vertical, MIN_DISTANCE_TO_GRID_INCHES / 12.0);
+            // Report: the numbers to check the translation from screen to model
+            var windowWidth = pick.WindowMaxInView.X - pick.WindowMinInView.X;
+            var windowHeight = pick.WindowMaxInView.Y - pick.WindowMinInView.Y;
 
-            if (ladders.Count == 0)
-            {
-                return Custom.Cancelled($"Nothing to dimension: {verticals.Count} vertical pipe(s) and {risers.Count} riser(s), no vertical grid found for them in this view.");
-            }
-
-            // Create the dimensions
-            var createdCount = 0;
-            var failedCount = 0;
-            var detailLines = new List<string>();
-
-            using (var transaction = new Transaction(doc, "C# for Revit: Stacked dimensions (vertical pipes)"))
-            {
-                transaction.Start();
-
-                foreach (var ladder in ladders)
-                {
-                    var ladderText = $"grid {ladder.Grid.Name}, {ladder.Parts.Count} pipe(s)";
-
-                    try
-                    {
-                        var dimension = Dimension_Utilities.CreateBaselineDimension(doc, activeView, ladder, dimensionType);
-
-                        if (dimension is null)
-                        {
-                            failedCount = failedCount + 1;
-                            detailLines.Add($"FAILED (no valid reference): {ladderText}");
-                        }
-                        else
-                        {
-                            createdCount = createdCount + 1;
-                            detailLines.Add($"OK #{Element_Utilities.IntegerValue(dimension.Id)}: {ladderText}");
-                        }
-                    }
-                    catch (Exception exception)
-                    {
-                        // Revit refuses some dimensions (e.g. a view type that doesn't accept them): count and go on
-                        failedCount = failedCount + 1;
-                        detailLines.Add($"FAILED ({exception.Message}): {ladderText}");
-                    }
-                }
-
-                transaction.Commit();
-            }
-
-            // Same lines in Visual Studio's Output window (Debug.R25 + F5)
-            foreach (var line in detailLines)
-            {
-                Debug.WriteLine($"[Dimension1] {line}");
-            }
-
-            // Report
             var report = new List<string>();
-            report.Add($"Source: {source}");
-            report.Add($"Vertical pipes: {verticals.Count}   risers: {risers.Count}   after removing close positions: {uniqueByX.Count}");
-            report.Add($"Ignored for now: horizontal {horizontalCount}");
-            report.Add($"Dimensions created: {createdCount}   failed: {failedCount}");
+            report.Add($"Line: {pick.LineOrientation}   (dimensions would measure {measuredAxis})");
+            report.Add($"Window: {windowWidth:0.00} ft x {windowHeight:0.00} ft");
+            report.Add($"Pipes in the view: {infos.Count}   candidates ({pipeOrientation} + risers): {candidates.Count}");
+            report.Add($"Touching the window (now selected): {touching.Count}");
+
+            // DEBUG (temporary, delete after the selection is fixed): where the window is x where the pipes are
+            var candidateMinX = double.MaxValue;
+            var candidateMaxX = double.MinValue;
+            var candidateMinY = double.MaxValue;
+            var candidateMaxY = double.MinValue;
+
+            foreach (var candidate in candidates)
+            {
+                if (candidate.MidPointInView is null) { continue; }
+
+                candidateMinX = Math.Min(candidateMinX, candidate.MidPointInView.X);
+                candidateMaxX = Math.Max(candidateMaxX, candidate.MidPointInView.X);
+                candidateMinY = Math.Min(candidateMinY, candidate.MidPointInView.Y);
+                candidateMaxY = Math.Max(candidateMaxY, candidate.MidPointInView.Y);
+            }
+
+            // DEBUG (temporary): the same window as a box for Revit's own filter (like a crossing selection).
+            // If this also finds 0, the window coordinates are wrong; if it finds pipes, FilterByWindow is wrong.
+            var modelCorner1 = View_Utilities.FromViewCoordinates(pick.WindowMinInView, activeView);
+            var modelCorner2 = View_Utilities.FromViewCoordinates(pick.WindowMaxInView, activeView);
+            var outline = new Outline(
+                new XYZ(Math.Min(modelCorner1.X, modelCorner2.X), Math.Min(modelCorner1.Y, modelCorner2.Y), -10000),
+                new XYZ(Math.Max(modelCorner1.X, modelCorner2.X), Math.Max(modelCorner1.Y, modelCorner2.Y), 10000));
+
+            var revitCrossingCount = new FilteredElementCollector(doc, activeView.Id)
+                .OfCategory(BuiltInCategory.OST_FabricationPipework)
+                .WherePasses(new BoundingBoxIntersectsFilter(outline))
+                .GetElementCount();
+
             report.Add("");
-            report.AddRange(detailLines);
+            report.Add($"DEBUG window      X: {pick.WindowMinInView.X:0.00} .. {pick.WindowMaxInView.X:0.00}   Y: {pick.WindowMinInView.Y:0.00} .. {pick.WindowMaxInView.Y:0.00}");
+            report.Add($"DEBUG candidates  X: {candidateMinX:0.00} .. {candidateMaxX:0.00}   Y: {candidateMinY:0.00} .. {candidateMaxY:0.00}");
+            report.Add($"DEBUG Revit crossing filter (all pipework, bounding boxes): {revitCrossingCount}");
 
             return Custom.Completed(string.Join("\n", report));
         }

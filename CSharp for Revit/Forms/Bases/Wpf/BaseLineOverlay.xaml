@@ -1,0 +1,43 @@
+<Window
+    x:Class="CSharp_for_Revit.Forms.Bases.BaseLineOverlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Pick line and window"
+    WindowStyle="None"
+    AllowsTransparency="True"
+    Background="Transparent"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowStartupLocation="Manual">
+
+    <Grid>
+        <!-- Almost transparent background (#01 = 1 of 255): invisible, but it receives the mouse.
+             A 100% transparent background lets the clicks pass through. -->
+        <Canvas x:Name="DrawingCanvas" Background="#01000000" Cursor="Cross">
+
+            <!-- The read window (3rd click): semi-transparent red -->
+            <Rectangle x:Name="ReadWindow"
+                       Fill="#40C00000"
+                       Stroke="#C00000"
+                       StrokeThickness="1"
+                       Visibility="Collapsed" />
+
+            <!-- The line (1st and 2nd clicks): where the largest dimension goes -->
+            <Line x:Name="OuterRowLine"
+                  Stroke="#C00000"
+                  StrokeThickness="3"
+                  Visibility="Collapsed" />
+        </Canvas>
+
+        <!-- Hint at the bottom. IsHitTestVisible=False: clicks go through it to the canvas -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,24"
+                Padding="14,6"
+                CornerRadius="6"
+                Background="#E61E2A38"
+                IsHitTestVisible="False">
+            <TextBlock x:Name="HintText" Foreground="White" FontSize="12" />
+        </Border>
+    </Grid>
+</Window>

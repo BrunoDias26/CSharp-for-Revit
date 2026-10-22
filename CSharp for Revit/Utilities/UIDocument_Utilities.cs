@@ -62,6 +62,111 @@ namespace CSharp_for_Revit.Utilities
 
         #endregion
 
+        #region Pick with overlay
+
+        /// <summary>
+        /// Asks the user for a line (locked to horizontal or vertical) and a read window, with live preview
+        /// over the active view (3 clicks; Esc cancels). Translates the screen pixels into the view's
+        /// screen coordinates in feet (X = right, Y = up), so it works in rotated views too.
+        /// </summary>
+        /// <param name="uiDoc">The active UIDocument.</param>
+        /// <returns>A LineWindowResult. Check Cancelled first.</returns>
+        public static LineWindowResult PickLineWithWindow(UIDocument uiDoc)
+        {
+            // Cancelled until the user finishes the 3 clicks
+            var result = new LineWindowResult();
+            result.Cancelled = true;
+
+            if (uiDoc is null) { return result; }
+
+            var view = uiDoc.ActiveGraphicalView;
+
+            // The UIView is the view's window on the screen: the one with the active view's Id
+            UIView uiView = null;
+
+            foreach (var openView in uiDoc.GetOpenUIViews())
+            {
+                if (openView.ViewId == view.Id)
+                {
+                    uiView = openView;
+                    break;
+                }
+            }
+
+            if (uiView is null) { return result; }
+
+            // Where the view is on the screen (pixels) and which part of the model it shows (2 opposite corners)
+            var rectangle = uiView.GetWindowRectangle();
+            var zoomCorners = uiView.GetZoomCorners();
+
+            // The overlay: 3 clicks, returns 3 points in physical screen pixels
+            var formResult = Custom.PickLineWithWindow(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom, uiDoc.Application.MainWindowHandle);
+            if (formResult.Cancelled) { return result; }
+
+            var pixels = formResult.Objects
+                .Cast<System.Windows.Point>()
+                .ToList();
+
+            // The visible area in screen coordinates (feet): its X and Y ranges
+            var corner1 = View_Utilities.ToViewCoordinates(zoomCorners[0], view);
+            var corner2 = View_Utilities.ToViewCoordinates(zoomCorners[1], view);
+            var minX = Math.Min(corner1.X, corner2.X);
+            var maxX = Math.Max(corner1.X, corner2.X);
+            var minY = Math.Min(corner1.Y, corner2.Y);
+            var maxY = Math.Max(corner1.Y, corner2.Y);
+            var depth = View_Utilities.ToViewCoordinates(view.Origin, view).Z;
+
+            // Rule of three: how many feet each pixel is worth, in X and in Y
+            var feetPerPixelX = (maxX - minX) / (rectangle.Right - rectangle.Left);
+            var feetPerPixelY = (maxY - minY) / (rectangle.Bottom - rectangle.Top);
+
+            // Local function: a small method that only exists inside this one and sees its variables.
+            // Screen pixels grow DOWN, the view's Y grows UP: that's why Y starts from maxY and subtracts.
+            XYZ PixelToView(System.Windows.Point pixel)
+            {
+                var x = minX + (pixel.X - rectangle.Left) * feetPerPixelX;
+                var y = maxY - (pixel.Y - rectangle.Top) * feetPerPixelY;
+                return new XYZ(x, y, depth);
+            }
+
+            var lineStart = PixelToView(pixels[0]);
+            var lineEnd = PixelToView(pixels[1]);
+            var extent = PixelToView(pixels[2]);
+
+            // DEBUG (temporary): the raw numbers of the translation, in Visual Studio's Output window
+            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] view rectangle (px): L={rectangle.Left} T={rectangle.Top} R={rectangle.Right} B={rectangle.Bottom}");
+            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] zoom corners (model): {zoomCorners[0]} | {zoomCorners[1]}");
+            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] visible area (view ft): X {minX:0.00}..{maxX:0.00}  Y {minY:0.00}..{maxY:0.00}");
+            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] clicks (px): {pixels[0]} | {pixels[1]} | {pixels[2]}");
+            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] clicks (view ft): {lineStart} | {lineEnd} | {extent}");
+
+            result.LineStartInView = lineStart;
+            result.LineEndInView = lineEnd;
+
+            // The overlay already locked the line: it changes either in X (horizontal) or in Y (vertical)
+            if (Math.Abs(lineEnd.X - lineStart.X) >= Math.Abs(lineEnd.Y - lineStart.Y))
+            {
+                result.LineOrientation = OrientationInView.Horizontal;
+
+                // Window: as long as the line in X, from the line to the 3rd click in Y
+                result.WindowMinInView = new XYZ(Math.Min(lineStart.X, lineEnd.X), Math.Min(lineStart.Y, extent.Y), depth);
+                result.WindowMaxInView = new XYZ(Math.Max(lineStart.X, lineEnd.X), Math.Max(lineStart.Y, extent.Y), depth);
+            }
+            else
+            {
+                result.LineOrientation = OrientationInView.Vertical;
+
+                // Window: as long as the line in Y, from the line to the 3rd click in X
+                result.WindowMinInView = new XYZ(Math.Min(lineStart.X, extent.X), Math.Min(lineStart.Y, lineEnd.Y), depth);
+                result.WindowMaxInView = new XYZ(Math.Max(lineStart.X, extent.X), Math.Max(lineStart.Y, lineEnd.Y), depth);
+            }
+
+            result.Cancelled = false;
+            return result;
+        }
+
+        #endregion
+
         #region Set selection
 
         // The 4 Select methods are independent on purpose (easier to read while learning):
