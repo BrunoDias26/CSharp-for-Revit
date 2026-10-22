@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local notes for Claude Code (kept on the PC, not on GitHub)
+/CLAUDE.md
+/UML-Cotas-Escalonadas.md
