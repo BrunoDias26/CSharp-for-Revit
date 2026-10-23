@@ -29,7 +29,7 @@ namespace CSharp_for_Revit.Forms.Bases
         private const double ZOOM_STEP_FACTOR = 1.25;
 
         /// <summary>
-        /// Optional: called when the user turns the mouse wheel over the overlay, so the caller can zoom
+        /// Optional: called when the user turns the mouse wheel over the overlay (before the 1st click), so the caller can zoom
         /// the view behind it. Arguments: the zoom factor (bigger than 1 = zoom in, smaller = zoom out) and
         /// the cursor position in physical screen pixels. The overlay only reports the wheel: it knows nothing
         /// about Revit. If nobody sets it, the wheel does nothing.
@@ -200,11 +200,15 @@ namespace CSharp_for_Revit.Forms.Bases
 
         /// <summary>
         /// Mouse wheel: asks the caller (through ZoomRequested) to zoom the view behind the overlay,
-        /// around the cursor. Wheel forward = zoom in; backward = zoom out.
+        /// around the cursor. Wheel forward = zoom in; backward = zoom out. Only before the 1st click.
         /// </summary>
         private void OnMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (ZoomRequested is null) { return; }
+
+            // After the 1st click the wheel does nothing: the clicked points are kept in pixels, and a new zoom
+            // would move them to another place of the model (the caller converts all of them with the final zoom)
+            if (_step != STEP_LINE_START) { return; }
 
             double factor;
 

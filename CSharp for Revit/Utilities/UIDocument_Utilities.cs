@@ -219,7 +219,7 @@ namespace CSharp_for_Revit.Utilities
 
             // Which part of the model the view shows (2 opposite corners), read AFTER the overlay closes,
             // so a zoom made before the 1st click is taken into account.
-            // (A zoom made BETWEEN clicks is not handled yet: the earlier clicks were in the old zoom.)
+            // (The overlay ignores the wheel after the 1st click: the earlier clicks would be in the old zoom.)
             var zoomCorners = uiView.GetZoomCorners();
 
             // The visible area in screen coordinates (feet): its X and Y ranges
