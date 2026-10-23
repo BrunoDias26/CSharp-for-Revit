@@ -10,34 +10,84 @@
     ShowInTaskbar="False"
     WindowStartupLocation="Manual">
 
+    <!-- Colors in one place (Windows 11 blue). #AARRGGBB: the first 2 digits are the opacity (26 = ~15%). -->
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0078D4" />
+        <SolidColorBrush x:Key="AccentFillBrush" Color="#260078D4" />
+        <SolidColorBrush x:Key="PillBrush" Color="#E6202124" />
+    </Window.Resources>
+
     <Grid>
         <!-- Almost transparent background (#01 = 1 of 255): invisible, but it receives the mouse.
              A 100% transparent background lets the clicks pass through. -->
         <Canvas x:Name="DrawingCanvas" Background="#01000000" Cursor="Cross">
 
-            <!-- The read window (3rd click): semi-transparent red -->
+            <!-- The read window (3rd click): light blue, rounded corners, dashed border -->
             <Rectangle x:Name="ReadWindow"
-                       Fill="#40C00000"
-                       Stroke="#C00000"
-                       StrokeThickness="1"
+                       Fill="{StaticResource AccentFillBrush}"
+                       Stroke="{StaticResource AccentBrush}"
+                       StrokeThickness="1.5"
+                       StrokeDashArray="4 3"
+                       RadiusX="6"
+                       RadiusY="6"
                        Visibility="Collapsed" />
 
-            <!-- The line (1st and 2nd clicks): where the largest dimension goes -->
+            <!-- The line (1st and 2nd clicks): thin, with round ends -->
             <Line x:Name="OuterRowLine"
-                  Stroke="#C00000"
-                  StrokeThickness="3"
+                  Stroke="{StaticResource AccentBrush}"
+                  StrokeThickness="2"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
                   Visibility="Collapsed" />
+
+            <!-- Dots on the clicked points (like the handles of a drawing tool) -->
+            <Ellipse x:Name="StartDot"
+                     Width="8"
+                     Height="8"
+                     Fill="White"
+                     Stroke="{StaticResource AccentBrush}"
+                     StrokeThickness="2"
+                     Visibility="Collapsed" />
+
+            <Ellipse x:Name="EndDot"
+                     Width="8"
+                     Height="8"
+                     Fill="White"
+                     Stroke="{StaticResource AccentBrush}"
+                     StrokeThickness="2"
+                     Visibility="Collapsed" />
         </Canvas>
 
-        <!-- Hint at the bottom. IsHitTestVisible=False: clicks go through it to the canvas -->
+        <!-- Hint "pill" at the bottom: step counter + text + ESC key.
+             IsHitTestVisible=False: clicks go through it to the canvas -->
         <Border HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
                 Margin="0,0,0,24"
-                Padding="14,6"
-                CornerRadius="6"
-                Background="#E61E2A38"
+                Padding="8,6,14,6"
+                CornerRadius="16"
+                Background="{StaticResource PillBrush}"
                 IsHitTestVisible="False">
-            <TextBlock x:Name="HintText" Foreground="White" FontSize="12" />
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" />
+            </Border.Effect>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                <!-- Step counter: 1/3, 2/3, 3/3 -->
+                <Border Background="{StaticResource AccentBrush}" CornerRadius="9" Padding="7,1">
+                    <TextBlock x:Name="StepText" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                </Border>
+
+                <TextBlock x:Name="HintText" Foreground="White" FontSize="12" Margin="10,0,14,0" VerticalAlignment="Center" />
+
+                <!-- The ESC key drawn as a small key -->
+                <Border BorderBrush="#99FFFFFF" BorderThickness="1" CornerRadius="4" Padding="5,0">
+                    <TextBlock Text="ESC" Foreground="White" FontSize="10" />
+                </Border>
+
+                <TextBlock Text="cancel" Foreground="#CCFFFFFF" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

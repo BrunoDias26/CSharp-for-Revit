@@ -9,6 +9,8 @@ namespace CSharp_for_Revit.Forms.Bases
     /// <summary>
     /// Transparent overlay placed over the Revit view, with live preview:
     /// clicks 1 and 2 draw a line locked to horizontal or vertical; click 3 opens a read window from that line.
+    /// Look (2026-10-22): Windows 11 blue, rounded dashed window, round line ends, dots on the clicked points,
+    /// and a hint "pill" with a step counter. Colors live in the XAML resources.
     /// Knows nothing about Revit: receives the screen rectangle in physical pixels and returns 3 screen points.
     /// Result: Tag = List&lt;object&gt; with 3 System.Windows.Point (physical screen pixels):
     /// line start, line end (already locked), window extent. DialogResult = true when finished, false on Esc.
@@ -115,6 +117,7 @@ namespace CSharp_for_Revit.Forms.Bases
             {
                 _lineEnd = LockToAxis(mouse);
                 DrawLine();
+                PlaceDot(EndDot, _lineEnd);
             }
             else if (_step == STEP_WINDOW)
             {
@@ -137,6 +140,13 @@ namespace CSharp_for_Revit.Forms.Bases
 
                 OuterRowLine.Visibility = System.Windows.Visibility.Visible;
                 DrawLine();
+
+                // A dot on the 1st point, and one that follows the line's end until the 2nd click
+                StartDot.Visibility = System.Windows.Visibility.Visible;
+                EndDot.Visibility = System.Windows.Visibility.Visible;
+                PlaceDot(StartDot, _lineStart);
+                PlaceDot(EndDot, _lineEnd);
+
                 _step = STEP_LINE_END;
             }
             else if (_step == STEP_LINE_END)
@@ -149,6 +159,9 @@ namespace CSharp_for_Revit.Forms.Bases
 
                 // PointToScreen gives physical screen pixels: the same unit Revit uses
                 _screenPoints.Add(DrawingCanvas.PointToScreen(_lineEnd));
+
+                // The end dot stays on the 2nd point
+                PlaceDot(EndDot, _lineEnd);
 
                 ReadWindow.Visibility = System.Windows.Visibility.Visible;
                 DrawWindow(mouse);
@@ -267,21 +280,35 @@ namespace CSharp_for_Revit.Forms.Bases
         }
 
         /// <summary>
-        /// The hint at the bottom, for the current step.
+        /// Centers a dot on a point. Canvas positions an element by its top-left corner,
+        /// so half the size is subtracted.
+        /// </summary>
+        private void PlaceDot(System.Windows.Shapes.Ellipse dot, Point point)
+        {
+            System.Windows.Controls.Canvas.SetLeft(dot, point.X - dot.Width / 2.0);
+            System.Windows.Controls.Canvas.SetTop(dot, point.Y - dot.Height / 2.0);
+        }
+
+        /// <summary>
+        /// The hint "pill" at the bottom, for the current step: the counter and the text.
+        /// (The ESC key and "cancel" are fixed in the XAML.)
         /// </summary>
         private void UpdateHint()
         {
             if (_step == STEP_LINE_START)
             {
-                HintText.Text = "CLICK: 1st point of the line (where the largest dimension goes)   ·   ESC: cancel";
+                StepText.Text = "1/3";
+                HintText.Text = "CLICK: 1st point of the line";
             }
             else if (_step == STEP_LINE_END)
             {
-                HintText.Text = "CLICK: 2nd point (locks horizontal / vertical)   ·   ESC: cancel";
+                StepText.Text = "2/3";
+                HintText.Text = "CLICK: 2nd point (locks horizontal / vertical)";
             }
             else
             {
-                HintText.Text = "CLICK: how far to read the pipes   ·   ESC: cancel";
+                StepText.Text = "3/3";
+                HintText.Text = "CLICK: read window end (the largest dimension goes here)";
             }
         }
 

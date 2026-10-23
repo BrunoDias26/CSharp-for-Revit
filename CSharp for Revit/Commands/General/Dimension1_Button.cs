@@ -45,28 +45,15 @@ namespace CSharp_for_Revit.Commands.General
                     return Custom.Cancelled("This tool works in a plan view, not on a sheet.\n\nOpen the floor plan from the Project Browser and run the tool again.");
                 }
 
-                // Inside a viewport: offer to open that view. The command stops after switching, because
-                // screen values read right after a view change, in the same command, can be out of date.
-                var answer = Custom.Message(
-                    title: "Open the view?",
-                    message: $"This tool works in the view itself, not inside a viewport on a sheet.\n\nOpen '{activeView.Name}' now?\n(Then run the tool again.)",
-                    yesNo: true);
-
-                if (answer.Affirmative == true)
-                {
-                    if (UIDocument_Utilities.ActivateView(uiDoc, activeView) == false)
-                    {
-                        return Custom.Cancelled($"Revit did not open '{activeView.Name}'.\n\nOpen it from the Project Browser and run the tool again.");
-                    }
-                }
-
-                return Result.Cancelled;
+                // Inside a viewport: name the view to open. (Opening it from code doesn't work in this state:
+                // Revit already reports it as the active view and ignores the request; tested 2026-10-22.)
+                return Custom.Cancelled($"This tool works in the view itself, not inside a viewport on a sheet.\n\nOpen '{activeView.Name}' from the Project Browser and run the tool again.");
             }
 
             // Plan views only: the grids, the risers and the screen directions only make sense seen from above
             if ((activeView is ViewPlan) == false)
             {
-                return Custom.Cancelled($"This tool works in plan views (floor, ceiling or structural plans).\n\nThe active view '{activeView.Name}' is a {activeView.ViewType}.");
+                return Custom.Cancelled($"This tool works in plan views (floor, ceiling or structural plans).");
             }
 
             // Dimension type first: without it there is nothing to do (and no clicks are wasted)
