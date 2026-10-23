@@ -3,6 +3,7 @@ using System.Text;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using CSharp_for_Revit.Forms;
+using View = Autodesk.Revit.DB.View;
 
 namespace CSharp_for_Revit.Utilities
 {
@@ -111,6 +112,29 @@ namespace CSharp_for_Revit.Utilities
                 return true;
             }
             else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Makes a view the active one (opens it in its own tab if needed).
+        /// Run it with no Transaction open. After switching, finish the command: values read from the screen
+        /// right after a view change, in the same command, can be out of date.
+        /// </summary>
+        /// <param name="uiDoc">The active UIDocument.</param>
+        /// <param name="view">The view to show.</param>
+        /// <returns>True if Revit accepted the change; false if it refused (e.g. a view that can't be activated).</returns>
+        public static bool ActivateView(UIDocument uiDoc, View view)
+        {
+            if (uiDoc is null || view is null) { return false; }
+
+            try
+            {
+                uiDoc.ActiveView = view;
+                return true;
+            }
+            catch
             {
                 return false;
             }

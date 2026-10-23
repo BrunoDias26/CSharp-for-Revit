@@ -12,7 +12,8 @@ namespace CSharp_for_Revit.Commands.General
     /// horizontal line = dimensions that measure X (vertical pipes + risers);
     /// vertical line = dimensions that measure Y (horizontal pipes + risers).
     /// Every ladder grows outward and its largest dimension touches the line through the 3rd click,
-    /// so all ladders end aligned. Works only in the view itself (not on a sheet / inside a viewport).
+    /// so all ladders end aligned. Works only in plan views opened directly (not on a sheet / inside a viewport,
+    /// not in 3D, sections or elevations). Only MEP Fabrication pipework is read, not regular Revit pipes.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
     public class Dimension1_Button : IExternalCommand
@@ -38,7 +39,34 @@ namespace CSharp_for_Revit.Commands.General
             // Only in the view itself: on a sheet (or inside a viewport) the screen translation lands in the wrong place
             if (UIDocument_Utilities.IsWorkingOnSheet(uiDoc) == true)
             {
-                return Custom.Cancelled("This tool works in the view itself, not on a sheet.\n\nOpen the floor plan from the Project Browser and run it again.");
+                // The sheet itself is open: it may hold several views, so there is no single one to offer
+                if (activeView is ViewSheet)
+                {
+                    return Custom.Cancelled("This tool works in a plan view, not on a sheet.\n\nOpen the floor plan from the Project Browser and run the tool again.");
+                }
+
+                // Inside a viewport: offer to open that view. The command stops after switching, because
+                // screen values read right after a view change, in the same command, can be out of date.
+                var answer = Custom.Message(
+                    title: "Open the view?",
+                    message: $"This tool works in the view itself, not inside a viewport on a sheet.\n\nOpen '{activeView.Name}' now?\n(Then run the tool again.)",
+                    yesNo: true);
+
+                if (answer.Affirmative == true)
+                {
+                    if (UIDocument_Utilities.ActivateView(uiDoc, activeView) == false)
+                    {
+                        return Custom.Cancelled($"Revit did not open '{activeView.Name}'.\n\nOpen it from the Project Browser and run the tool again.");
+                    }
+                }
+
+                return Result.Cancelled;
+            }
+
+            // Plan views only: the grids, the risers and the screen directions only make sense seen from above
+            if ((activeView is ViewPlan) == false)
+            {
+                return Custom.Cancelled($"This tool works in plan views (floor, ceiling or structural plans).\n\nThe active view '{activeView.Name}' is a {activeView.ViewType}.");
             }
 
             // Dimension type first: without it there is nothing to do (and no clicks are wasted)
@@ -102,7 +130,9 @@ namespace CSharp_for_Revit.Commands.General
 
             if (touching.Count == 0)
             {
-                return Custom.Cancelled($"No {pipeOrientation.ToString().ToLower()} pipes or risers touch the window.");
+                return Custom.Cancelled(
+                    $"No {pipeOrientation.ToString().ToLower()} fabrication pipes touch the window.\n\n" +
+                    "A horizontal line reads vertical pipes; a vertical line reads horizontal pipes.");
             }
 
             // One witness line per position (a riser and a pipe at the same position share one)
@@ -114,7 +144,7 @@ namespace CSharp_for_Revit.Commands.General
 
             if (ladders.Count == 0)
             {
-                return Custom.Cancelled($"Nothing to dimension: no {pipeOrientation.ToString().ToLower()} grid found for the {unique.Count} pipe position(s).");
+                return Custom.Cancelled($"Nothing to dimension: no {pipeOrientation.ToString().ToLower()} grid visible in this view for the {unique.Count} fabrication pipe position(s).\n\nThe dimensions start at the nearest grid parallel to the pipes.");
             }
 
             // Create the dimensions: created at the target line, then stacked outward and pulled in until
@@ -165,15 +195,19 @@ namespace CSharp_for_Revit.Commands.General
                 Debug.WriteLine($"[Dimension1] {line}");
             }
 
-            // Report
+            // Everything worked: no message, the dimensions on the screen are the answer
+            if (failedCount == 0) { return Result.Succeeded; }
+
+            // Something failed: say what, so a missing dimension is never silent
             var report = new List<string>();
             report.Add($"Line: {pick.LineOrientation}   (dimensions measure {measuredAxis})");
-            report.Add($"Pipes touching the window: {touching.Count}   after removing close positions: {unique.Count}");
+            report.Add($"Fabrication pipes touching the window: {touching.Count}   after removing close positions: {unique.Count}");
             report.Add($"Dimensions created: {createdCount}   failed: {failedCount}");
             report.Add("");
             report.AddRange(detailLines);
 
-            return Custom.Completed(string.Join("\n", report));
+            Custom.Message(title: "Some dimensions failed", message: string.Join("\n", report), noCancel: true, icon: MessageBoxIcon.Warning);
+            return Result.Succeeded;
         }
     }
 }
