@@ -248,14 +248,17 @@ namespace CSharp_for_Revit.Utilities
 
         /// <summary>
         /// Creates the baseline dimension of one ladder: the grid first, then each part's centerline.
-        /// Must run inside an open Transaction. The dimension line is placed over the parts (position not refined yet).
+        /// Must run inside an open Transaction. The first row is placed at linePositionInView;
+        /// use AlignOuterRow afterwards to stack it outward and align its outermost row.
         /// </summary>
         /// <param name="doc">The active Revit document.</param>
         /// <param name="view">The view where the dimension is created.</param>
         /// <param name="ladder">The ladder (from GetLadders).</param>
         /// <param name="dimensionType">The dimension type (Baseline style).</param>
+        /// <param name="linePositionInView">Where the dimension line goes, on the screen axis across it:
+        /// Y for dimensions that measure X, X for dimensions that measure Y (feet, see View_Utilities.ToViewCoordinates).</param>
         /// <returns>The new dimension, or null if no part had a valid centerline reference.</returns>
-        public static Dimension CreateBaselineDimension(Document doc, View view, DimensionLadderInfo ladder, DimensionType dimensionType)
+        public static Dimension CreateBaselineDimension(Document doc, View view, DimensionLadderInfo ladder, DimensionType dimensionType, double linePositionInView)
         {
             if (doc is null || view is null || ladder is null || dimensionType is null) { return null; }
             if (ladder.Parts.Count == 0) { return null; }
@@ -308,24 +311,133 @@ namespace CSharp_for_Revit.Utilities
 
             if (ladder.GridOrientation == OrientationInView.Vertical)
             {
-                // Measures X: a horizontal line, at the height of the highest part (over the pipes, for now)
-                var lineY = ladder.Parts.Max(i => i.MidPointInView.Y);
-                startInView = new XYZ(gridPosition, lineY, depth);
-                endInView = new XYZ(farthestPosition, lineY, depth);
+                // Measures X: a horizontal line, at the requested height
+                startInView = new XYZ(gridPosition, linePositionInView, depth);
+                endInView = new XYZ(farthestPosition, linePositionInView, depth);
             }
             else
             {
-                // Measures Y: a vertical line, at the right of the rightmost part
-                var lineX = ladder.Parts.Max(i => i.MidPointInView.X);
-                startInView = new XYZ(lineX, gridPosition, depth);
-                endInView = new XYZ(lineX, farthestPosition, depth);
+                // Measures Y: a vertical line, at the requested X
+                startInView = new XYZ(linePositionInView, gridPosition, depth);
+                endInView = new XYZ(linePositionInView, farthestPosition, depth);
             }
 
+            // The line starts at the grid: that keeps the grid as the origin of the baseline
             var line = Line.CreateBound(
                 View_Utilities.FromViewCoordinates(startInView, view),
                 View_Utilities.FromViewCoordinates(endInView, view));
 
             return doc.Create.NewDimension(view, line, references, dimensionType);
+        }
+
+        /// <summary>
+        /// Makes the stack grow outward (largest value farthest from the pipes) and moves the dimension
+        /// so that its outermost row lies on the target line. Must run inside an open Transaction.
+        /// </summary>
+        /// <param name="doc">The active Revit document.</param>
+        /// <param name="view">The view of the dimension.</param>
+        /// <param name="dimension">A baseline dimension just created by CreateBaselineDimension.</param>
+        /// <param name="gridOrientation">Vertical (the dimension measures X) or Horizontal (it measures Y).</param>
+        /// <param name="firstRowInView">Where the dimension line was created (the linePositionInView used).</param>
+        /// <param name="targetInView">Where the outermost row must go, on the same screen axis (feet).</param>
+        /// <param name="outwardSign">+1 if "outward" is towards bigger screen Y (or X), -1 if towards smaller.</param>
+        public static void AlignOuterRow(Document doc, View view, Dimension dimension, OrientationInView gridOrientation, double firstRowInView, double targetInView, double outwardSign)
+        {
+            if (doc is null || view is null || dimension is null) { return; }
+
+            // Text positions are only up to date after a regeneration
+            doc.Regenerate();
+
+            // A dimension with a single value reports 0 segments: that is 1 row
+            var rowCount = dimension.NumberOfSegments;
+            if (rowCount < 1) { rowCount = 1; }
+
+            // Baseline Offset = the step between rows, in paper feet (e.g. 1/4"). It can be negative.
+            var offsetParameter = dimension.get_Parameter(BuiltInParameter.BASELINE_DIM_OFFSET);
+            var stepPaperFeet = 0.0;
+
+            if (offsetParameter is not null)
+            {
+                stepPaperFeet = Math.Abs(offsetParameter.AsDouble());
+            }
+
+            // 1. Stack direction: MEASURED, never deduced from the sign. The same sign stacks up or down
+            //    depending on the direction of the dimension line (found in August, and seen again on 2026-10-20).
+            if (rowCount > 1 && offsetParameter is not null && offsetParameter.IsReadOnly == false)
+            {
+                var growth = GetStackGrowth(view, dimension, gridOrientation);
+
+                // growth and outwardSign with opposite signs = the stack grew towards the pipes: flip it
+                if (growth * outwardSign < 0)
+                {
+                    offsetParameter.Set(-offsetParameter.AsDouble());
+                    doc.Regenerate();
+                }
+            }
+
+            // 2. The outermost row: the first row is the dimension line, each next row one step further out.
+            //    The step on the model = step on paper x view scale (1/4" at 1:96 = 2 ft).
+            var stepModelFeet = stepPaperFeet * view.Scale;
+            var outerRowInView = firstRowInView + (rowCount - 1) * stepModelFeet * outwardSign;
+            var distanceToMove = targetInView - outerRowInView;
+
+            if (Math.Abs(distanceToMove) < 1e-9) { return; }
+
+            // Move across the dimension line: up/down for dimensions that measure X, right/left for Y
+            XYZ moveDirection;
+
+            if (gridOrientation == OrientationInView.Vertical)
+            {
+                moveDirection = view.UpDirection;
+            }
+            else
+            {
+                moveDirection = view.RightDirection;
+            }
+
+            ElementTransformUtils.MoveElement(doc, dimension.Id, moveDirection * distanceToMove);
+        }
+
+        /// <summary>
+        /// Which way the stack grows, measured on the texts: position of the largest value minus position of the
+        /// smallest, on the screen axis across the dimension line. Positive = it grows towards bigger Y (or X).
+        /// </summary>
+        /// <returns>The difference in feet, or 0 if it can't be measured.</returns>
+        private static double GetStackGrowth(View view, Dimension dimension, OrientationInView gridOrientation)
+        {
+            DimensionSegment smallest = null;
+            DimensionSegment largest = null;
+
+            // Segments is an old collection type (without <T>): the explicit type in the foreach does the cast
+            foreach (DimensionSegment segment in dimension.Segments)
+            {
+                // Value is "double?" (it can be empty): HasValue checks it, .Value reads it
+                if (segment.Value.HasValue == false || segment.TextPosition is null) { continue; }
+
+                if (smallest is null || segment.Value.Value < smallest.Value.Value)
+                {
+                    smallest = segment;
+                }
+
+                if (largest is null || segment.Value.Value > largest.Value.Value)
+                {
+                    largest = segment;
+                }
+            }
+
+            if (smallest is null || largest is null) { return 0.0; }
+
+            var largestPosition = View_Utilities.ToViewCoordinates(largest.TextPosition, view);
+            var smallestPosition = View_Utilities.ToViewCoordinates(smallest.TextPosition, view);
+
+            if (gridOrientation == OrientationInView.Vertical)
+            {
+                return largestPosition.Y - smallestPosition.Y;
+            }
+            else
+            {
+                return largestPosition.X - smallestPosition.X;
+            }
         }
 
         #endregion

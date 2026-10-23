@@ -16,6 +16,9 @@ namespace CSharp_for_Revit.Utilities
         /// <summary>2nd point of the line (already locked to horizontal or vertical).</summary>
         public XYZ LineEndInView { get; set; }
 
+        /// <summary>The 3rd click: the far edge of the read window, where the largest dimension of each ladder goes.</summary>
+        public XYZ ExtentInView { get; set; }
+
         /// <summary>Horizontal (the dimensions measure X) or Vertical (they measure Y).</summary>
         public OrientationInView LineOrientation { get; set; }
 

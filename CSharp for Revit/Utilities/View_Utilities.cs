@@ -62,6 +62,36 @@ namespace CSharp_for_Revit.Utilities
 
         #endregion
 
+        #region Sheets
+
+        /// <summary>
+        /// Finds the viewport that places a view on a sheet.
+        /// </summary>
+        /// <param name="doc">The active Revit document.</param>
+        /// <param name="view">The view (e.g. a floor plan).</param>
+        /// <returns>The viewport, or null if the view is not on any sheet.</returns>
+        public static Viewport GetViewportOfView(Document doc, View view)
+        {
+            if (doc is null || view is null) { return null; }
+
+            var viewports = new FilteredElementCollector(doc)
+                .OfClass(typeof(Viewport))
+                .Cast<Viewport>()
+                .ToList();
+
+            foreach (var viewport in viewports)
+            {
+                if (viewport.ViewId == view.Id && viewport.SheetId != ElementId.InvalidElementId)
+                {
+                    return viewport;
+                }
+            }
+
+            return null;
+        }
+
+        #endregion
+
         #region Orientation
 
         /// <summary>
