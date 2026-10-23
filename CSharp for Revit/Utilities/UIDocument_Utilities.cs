@@ -173,17 +173,54 @@ namespace CSharp_for_Revit.Utilities
 
             if (uiView is null) { return result; }
 
-            // Where the view is on the screen (pixels) and which part of the model it shows (2 opposite corners)
+            // Where the view is on the screen (pixels). The window doesn't move while picking.
             var rectangle = uiView.GetWindowRectangle();
-            var zoomCorners = uiView.GetZoomCorners();
+
+            // Mouse wheel over the overlay: zoom the view around the cursor (the overlay only reports the wheel).
+            // Local function: a small method that only exists inside this one and sees its variables.
+            void ZoomAroundCursor(double factor, System.Windows.Point cursorPixel)
+            {
+                // The visible area right now (it changes at every zoom, so it is read again each time)
+                var currentCorners = uiView.GetZoomCorners();
+                var visible1 = View_Utilities.ToViewCoordinates(currentCorners[0], view);
+                var visible2 = View_Utilities.ToViewCoordinates(currentCorners[1], view);
+                var visibleMinX = Math.Min(visible1.X, visible2.X);
+                var visibleMaxX = Math.Max(visible1.X, visible2.X);
+                var visibleMinY = Math.Min(visible1.Y, visible2.Y);
+                var visibleMaxY = Math.Max(visible1.Y, visible2.Y);
+                var zoomDepth = View_Utilities.ToViewCoordinates(view.Origin, view).Z;
+
+                // The point under the cursor, in feet (same rule of three used for the clicks)
+                var cursorX = visibleMinX + (cursorPixel.X - rectangle.Left) * (visibleMaxX - visibleMinX) / (rectangle.Right - rectangle.Left);
+                var cursorY = visibleMaxY - (cursorPixel.Y - rectangle.Top) * (visibleMaxY - visibleMinY) / (rectangle.Bottom - rectangle.Top);
+
+                // New visible area: the point under the cursor stays put, everything else gets closer
+                // (factor > 1, zoom in) or farther (factor < 1, zoom out)
+                var newCorner1 = View_Utilities.FromViewCoordinates(new XYZ(
+                    cursorX + (visibleMinX - cursorX) / factor,
+                    cursorY + (visibleMinY - cursorY) / factor,
+                    zoomDepth), view);
+
+                var newCorner2 = View_Utilities.FromViewCoordinates(new XYZ(
+                    cursorX + (visibleMaxX - cursorX) / factor,
+                    cursorY + (visibleMaxY - cursorY) / factor,
+                    zoomDepth), view);
+
+                uiView.ZoomAndCenterRectangle(newCorner1, newCorner2);
+            }
 
             // The overlay: 3 clicks, returns 3 points in physical screen pixels
-            var formResult = Custom.PickLineWithWindow(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom, uiDoc.Application.MainWindowHandle);
+            var formResult = Custom.PickLineWithWindow(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom, uiDoc.Application.MainWindowHandle, ZoomAroundCursor);
             if (formResult.Cancelled) { return result; }
 
             var pixels = formResult.Objects
                 .Cast<System.Windows.Point>()
                 .ToList();
+
+            // Which part of the model the view shows (2 opposite corners), read AFTER the overlay closes,
+            // so a zoom made before the 1st click is taken into account.
+            // (A zoom made BETWEEN clicks is not handled yet: the earlier clicks were in the old zoom.)
+            var zoomCorners = uiView.GetZoomCorners();
 
             // The visible area in screen coordinates (feet): its X and Y ranges
             var corner1 = View_Utilities.ToViewCoordinates(zoomCorners[0], view);

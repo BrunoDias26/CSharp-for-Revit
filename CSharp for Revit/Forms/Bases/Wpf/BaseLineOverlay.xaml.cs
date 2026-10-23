@@ -25,6 +25,17 @@ namespace CSharp_for_Revit.Forms.Bases
         // A line or window smaller than this (in WPF units, ~pixels) is an accidental click: ignored
         private const double MIN_SIZE_UNITS = 4.0;
 
+        // One mouse wheel notch zooms in (or out) by this factor
+        private const double ZOOM_STEP_FACTOR = 1.25;
+
+        /// <summary>
+        /// Optional: called when the user turns the mouse wheel over the overlay, so the caller can zoom
+        /// the view behind it. Arguments: the zoom factor (bigger than 1 = zoom in, smaller = zoom out) and
+        /// the cursor position in physical screen pixels. The overlay only reports the wheel: it knows nothing
+        /// about Revit. If nobody sets it, the wheel does nothing.
+        /// </summary>
+        public Action<double, Point> ZoomRequested { get; set; }
+
         // The Revit view rectangle on the screen, in physical pixels
         private readonly int _screenLeft;
         private readonly int _screenTop;
@@ -66,6 +77,7 @@ namespace CSharp_for_Revit.Forms.Bases
             Loaded += OnLoaded;
             DrawingCanvas.MouseMove += OnMouseMove;
             DrawingCanvas.MouseLeftButtonDown += OnMouseLeftButtonDown;
+            DrawingCanvas.MouseWheel += OnMouseWheel;
             KeyDown += OnKeyDown;
 
             UpdateHint();
@@ -184,6 +196,35 @@ namespace CSharp_for_Revit.Forms.Bases
             }
 
             UpdateHint();
+        }
+
+        /// <summary>
+        /// Mouse wheel: asks the caller (through ZoomRequested) to zoom the view behind the overlay,
+        /// around the cursor. Wheel forward = zoom in; backward = zoom out.
+        /// </summary>
+        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (ZoomRequested is null) { return; }
+
+            double factor;
+
+            // Delta > 0 = wheel turned forward (away from the user)
+            if (e.Delta > 0)
+            {
+                factor = ZOOM_STEP_FACTOR;
+            }
+            else
+            {
+                factor = 1.0 / ZOOM_STEP_FACTOR;
+            }
+
+            // Same unit as the clicks: physical screen pixels
+            var cursorPixel = DrawingCanvas.PointToScreen(e.GetPosition(DrawingCanvas));
+
+            ZoomRequested(factor, cursorPixel);
+
+            // The wheel was used here: no other control should react to it
+            e.Handled = true;
         }
 
         /// <summary>

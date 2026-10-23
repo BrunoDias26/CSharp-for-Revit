@@ -244,14 +244,19 @@ namespace CSharp_for_Revit.Forms
         /// <param name="screenRight">Right edge, physical screen pixels.</param>
         /// <param name="screenBottom">Bottom edge, physical screen pixels.</param>
         /// <param name="ownerHandle">The window the overlay belongs to (e.g. Revit's main window).</param>
+        /// <param name="zoomRequested">Optional: what to do when the user turns the mouse wheel over the overlay
+        /// (zoom factor, cursor in physical screen pixels). Null = the wheel does nothing.</param>
         /// <returns>A FormResult. Objects = 3 System.Windows.Point in physical screen pixels:
         /// line start, line end (already locked), window extent.</returns>
-        public static FormResult PickLineWithWindow(int screenLeft, int screenTop, int screenRight, int screenBottom, IntPtr ownerHandle)
+        public static FormResult PickLineWithWindow(int screenLeft, int screenTop, int screenRight, int screenBottom, IntPtr ownerHandle, Action<double, System.Windows.Point> zoomRequested = null)
         {
             var formResult = new FormResult(isValid: false);
 
             // WPF windows are not IDisposable, so no "using" here (unlike the WinForms forms)
             var overlay = new Bases.BaseLineOverlay(screenLeft, screenTop, screenRight, screenBottom, ownerHandle);
+
+            // The overlay only reports the wheel; the caller decides what zooming means
+            overlay.ZoomRequested = zoomRequested;
 
             // ShowDialog in WPF returns bool? (true, false or null): only true means "finished"
             if (overlay.ShowDialog() == true)
