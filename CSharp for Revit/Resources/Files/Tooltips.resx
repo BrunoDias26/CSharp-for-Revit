@@ -153,7 +153,7 @@ We can do Extra Lines.</value>
     <value>This is Stack3 Button.</value>
   </data>
   <data name="Dimension1_Button" xml:space="preserve">
-    <value>Test (creates nothing): draw a line (horizontal or vertical) and a read window; selects the fabrication pipes the stacked dimensions would use.</value>
+    <value>Draw a line (horizontal or vertical) and a read window: creates stacked baseline dimensions for the fabrication pipes in the window, from the nearest grid, with the largest dimension on the 3rd click.</value>
   </data>
   <data name="Dimension_Button" xml:space="preserve">
     <value>Tools related to stacked pipe dimensions.</value>

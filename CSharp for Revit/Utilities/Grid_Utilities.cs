@@ -163,8 +163,7 @@ namespace CSharp_for_Revit.Utilities
             if (match is null || match.Grid is null) { return "no grid"; }
 
             // Distance as the project shows it (e.g. 8' - 6"), instead of decimal feet
-            var doc = match.Grid.Document;
-            var distanceText = UnitFormatUtils.Format(doc.GetUnits(), SpecTypeId.Length, match.DistanceFeet, false);
+            var distanceText = Units_Utilities.FormatLength(match.Grid.Document, match.DistanceFeet);
 
             // The side's name depends on the grid: a vertical grid has right/left, a horizontal one above/below
             string sideText;

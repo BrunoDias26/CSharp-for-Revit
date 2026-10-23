@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using System.Text;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 using CSharp_for_Revit.Forms;
@@ -64,10 +66,84 @@ namespace CSharp_for_Revit.Utilities
 
         #region Pick with overlay
 
+        // DllImport = calling a function of Windows itself (user32.dll), outside .NET.
+        // GetWindowText reads the text of a window's title bar.
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetWindowText(IntPtr windowHandle, StringBuilder text, int maxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetWindowTextLength(IntPtr windowHandle);
+
+        /// <summary>
+        /// Is the user working on a sheet: the sheet itself, or a view edited inside a viewport (double-clicked)?
+        /// The API can't tell the viewport case: ActiveView returns the plan in both cases (tested 2026-10-22).
+        /// Revit's title bar can: it shows "Sheet: number - name" when the sheet is in front.
+        /// </summary>
+        /// <param name="uiDoc">The active UIDocument.</param>
+        /// <returns>True if the active window is a sheet; false if it is the view itself.</returns>
+        public static bool IsWorkingOnSheet(UIDocument uiDoc)
+        {
+            if (uiDoc is null) { return false; }
+
+            var doc = uiDoc.Document;
+            var view = uiDoc.ActiveGraphicalView;
+
+            if (view is null) { return false; }
+
+            // The sheet itself is open (no viewport activated)
+            if (view is ViewSheet) { return true; }
+
+            // Is this view placed on a sheet at all?
+            var viewport = View_Utilities.GetViewportOfView(doc, view);
+            if (viewport is null) { return false; }
+
+            var sheet = doc.GetElement(viewport.SheetId) as ViewSheet;
+            if (sheet is null) { return false; }
+
+            // Number + name, not only the name: in the CTS sheets the sheet name is equal to the view name.
+            // And not the word "Sheet:", because it changes with Revit's language.
+            var caption = GetRevitCaption(uiDoc.Application.MainWindowHandle);
+            var sheetText = $"{sheet.SheetNumber} - {sheet.Name}";
+
+            // IndexOf with a comparison works in .NET Framework 4.8 too (Contains with a comparison doesn't)
+            if (caption.IndexOf(sheetText, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Reads the text of Revit's title bar (e.g. "Autodesk Revit 2025.4 - [Model.rvt - Floor Plan: Level 1]").
+        /// </summary>
+        /// <param name="windowHandle">Revit's main window (uiApp.MainWindowHandle).</param>
+        /// <returns>The caption, or an empty text if it can't be read.</returns>
+        private static string GetRevitCaption(IntPtr windowHandle)
+        {
+            if (windowHandle == IntPtr.Zero) { return string.Empty; }
+
+            try
+            {
+                var length = GetWindowTextLength(windowHandle);
+                var text = new StringBuilder(length + 1);
+                GetWindowText(windowHandle, text, text.Capacity);
+                return text.ToString();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
         /// <summary>
         /// Asks the user for a line (locked to horizontal or vertical) and a read window, with live preview
         /// over the active view (3 clicks; Esc cancels). Translates the screen pixels into the view's
         /// screen coordinates in feet (X = right, Y = up), so it works in rotated views too.
+        /// Works only in the view itself: check IsWorkingOnSheet first (inside a sheet viewport the
+        /// zoom corners come in another scale and the result lands in the wrong place).
         /// </summary>
         /// <param name="uiDoc">The active UIDocument.</param>
         /// <returns>A LineWindowResult. Check Cancelled first.</returns>
@@ -81,7 +157,9 @@ namespace CSharp_for_Revit.Utilities
 
             var view = uiDoc.ActiveGraphicalView;
 
-            // The UIView is the view's window on the screen: the one with the active view's Id
+            // The UIView is the view's window on the screen: the one with the active view's Id.
+            // If the same view is also activated in a viewport of an open sheet, 2 windows have this Id;
+            // tested (2026-10-22): with the view in front, it is the first one in the list.
             UIView uiView = null;
 
             foreach (var openView in uiDoc.GetOpenUIViews())
@@ -133,15 +211,9 @@ namespace CSharp_for_Revit.Utilities
             var lineEnd = PixelToView(pixels[1]);
             var extent = PixelToView(pixels[2]);
 
-            // DEBUG (temporary): the raw numbers of the translation, in Visual Studio's Output window
-            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] view rectangle (px): L={rectangle.Left} T={rectangle.Top} R={rectangle.Right} B={rectangle.Bottom}");
-            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] zoom corners (model): {zoomCorners[0]} | {zoomCorners[1]}");
-            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] visible area (view ft): X {minX:0.00}..{maxX:0.00}  Y {minY:0.00}..{maxY:0.00}");
-            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] clicks (px): {pixels[0]} | {pixels[1]} | {pixels[2]}");
-            System.Diagnostics.Debug.WriteLine($"[PickLineWithWindow] clicks (view ft): {lineStart} | {lineEnd} | {extent}");
-
             result.LineStartInView = lineStart;
             result.LineEndInView = lineEnd;
+            result.ExtentInView = extent;
 
             // The overlay already locked the line: it changes either in X (horizontal) or in Y (vertical)
             if (Math.Abs(lineEnd.X - lineStart.X) >= Math.Abs(lineEnd.Y - lineStart.Y))
