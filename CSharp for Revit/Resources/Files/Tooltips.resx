@@ -152,8 +152,14 @@ We can do Extra Lines.</value>
   <data name="Command_Stack3" xml:space="preserve">
     <value>This is Stack3 Button.</value>
   </data>
-  <data name="Dimension1_Button" xml:space="preserve">
-    <value>Draw a line (horizontal or vertical) and a read window: creates stacked baseline dimensions for the fabrication pipes in the window, from the nearest grid, with the largest dimension on the 3rd click.</value>
+  <data name="PipeFromGrid_Button" xml:space="preserve">
+    <value>Creates stacked baseline dimensions from the nearest grid to the fabrication pipes inside a window.
+
+Clicks 1-2: draw a line. A horizontal line reads vertical pipes; a vertical line reads horizontal pipes. Risers are always read.
+Click 3: end of the read window. The largest dimension goes here.
+Mouse wheel: zoom (before the 1st click). Esc: cancel.
+
+Plan views only. MEP Fabrication pipes.</value>
   </data>
   <data name="Dimension_Button" xml:space="preserve">
     <value>Tools related to stacked pipe dimensions.</value>

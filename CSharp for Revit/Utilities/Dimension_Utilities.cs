@@ -37,6 +37,24 @@ namespace CSharp_for_Revit.Utilities
         }
 
         /// <summary>
+        /// The dimension type the Linear dimension tool is set to in this project
+        /// (the type shown in the Type Selector of Annotate > Linear). Each project keeps its own.
+        /// </summary>
+        /// <param name="doc">The active Revit document.</param>
+        /// <returns>The dimension type, or null if the project has none set.</returns>
+        public static DimensionType GetDefaultLinearDimensionType(Document doc)
+        {
+            if (doc is null) { return null; }
+
+            var typeId = doc.GetDefaultElementTypeId(ElementTypeGroup.LinearDimensionType);
+
+            if (typeId == ElementId.InvalidElementId) { return null; }
+
+            // "as": null if the element is not a DimensionType (instead of an error)
+            return doc.GetElement(typeId) as DimensionType;
+        }
+
+        /// <summary>
         /// Gets the reference of an element's centerline (a LINE), to be used by a dimension.
         /// Good for pipes that lie on the screen (vertical / horizontal in plan).
         /// Recipe validated with pyRevit on MEP Fabrication Pipework (2026-08-20, view G1).

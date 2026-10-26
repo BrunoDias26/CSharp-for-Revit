@@ -111,7 +111,7 @@ namespace CSharp_for_Revit
             var pulldownDimension = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Dimension", "CSharp_for_Revit.Commands.General.Dimension_Button");
 
             // Add pushbuttons to dimension
-            Ribbon_Utilities.AddPushButtonToPulldown(pulldownDimension, "Stacked dimensions", "CSharp_for_Revit.Commands.General.Dimension1_Button", availability: AvailabilityNames.Project);
+            Ribbon_Utilities.AddPushButtonToPulldown(pulldownDimension, "Pipe from Grid","CSharp_for_Revit.Commands.General.PipeFromGrid_Button", availability: AvailabilityNames.Project);
 
             // Testing button (directly on the panel, no pulldown)
             Ribbon_Utilities.AddPushButtonToPanel(panelTools, "Testing", "CSharp_for_Revit.Commands.General.Testing_Button", availability: AvailabilityNames.Project);

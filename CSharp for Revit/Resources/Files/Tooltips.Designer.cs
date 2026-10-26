@@ -162,11 +162,11 @@ namespace CSharp_for_Revit.Resources.Files {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Draw a line (horizontal or vertical) and a read window: creates stacked baseline dimensions....
+        ///   Looks up a localized string similar to Creates stacked baseline dimensions from the nearest grid to the fabrication pipes inside a window....
         /// </summary>
-        internal static string Dimension1_Button {
+        internal static string PipeFromGrid_Button {
             get {
-                return ResourceManager.GetString("Dimension1_Button", resourceCulture);
+                return ResourceManager.GetString("PipeFromGrid_Button", resourceCulture);
             }
         }
 

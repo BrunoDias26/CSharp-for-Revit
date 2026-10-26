@@ -7,7 +7,9 @@ using CSharp_for_Revit.Utilities;
 namespace CSharp_for_Revit.Commands.General
 {
     /// <summary>
-    /// Stacked baseline dimensions for fabrication pipes (CID 2041), from the nearest grid.
+    /// "Pipe from Grid": stacked baseline dimensions for fabrication pipes (CID 2041), from the nearest grid.
+    /// Naming rule: button name without spaces + "_Button" = this class, its icons ({class}32.png / {class}16.png)
+    /// and its tooltip key.
     /// The user draws a line (locked H/V) and a read window over the active view:
     /// horizontal line = dimensions that measure X (vertical pipes + risers);
     /// vertical line = dimensions that measure Y (horizontal pipes + risers).
@@ -16,11 +18,8 @@ namespace CSharp_for_Revit.Commands.General
     /// not in 3D, sections or elevations). Only MEP Fabrication pipework is read, not regular Revit pipes.
     /// </summary>
     [Transaction(TransactionMode.Manual)]
-    public class Dimension1_Button : IExternalCommand
+    public class PipeFromGrid_Button : IExternalCommand
     {
-        // Dimension type used for piping (CTS standard, sheet M-L1-SD-C1)
-        private const string DIMENSION_TYPE_NAME = "CTS - Linear - 3/32\" Arial - Line Leader - Inline Text BASELINE";
-
         // Two pipes closer than this (1") along the measured axis get one witness line only.
         // static readonly, not const: the value comes from a method, calculated once and never changed.
         private static readonly double MERGE_TOLERANCE_FEET = Units_Utilities.InchesToFeet(1.0);
@@ -56,12 +55,14 @@ namespace CSharp_for_Revit.Commands.General
                 return Custom.Cancelled($"This tool works in plan views (floor, ceiling or structural plans).");
             }
 
-            // Dimension type first: without it there is nothing to do (and no clicks are wasted)
-            var dimensionType = Dimension_Utilities.GetDimensionTypeByName(doc, DIMENSION_TYPE_NAME);
+            // Dimension type first: without it there is nothing to do (and no clicks are wasted).
+            // It is the type the Linear dimension tool is set to in this project. A type that is not Baseline
+            // makes a chain instead of a ladder: the user sees it and changes the type in Revit.
+            var dimensionType = Dimension_Utilities.GetDefaultLinearDimensionType(doc);
 
             if (dimensionType is null)
             {
-                return Custom.Cancelled($"Dimension type not found in this model:\n{DIMENSION_TYPE_NAME}");
+                return Custom.Cancelled("No linear dimension type is set in this project.\n\nPick one in Annotate > Linear and run the tool again.");
             }
 
             // Ask for the line and the read window (3 clicks, Esc cancels)
@@ -140,7 +141,7 @@ namespace CSharp_for_Revit.Commands.General
             var failedCount = 0;
             var detailLines = new List<string>();
 
-            using (var transaction = new Transaction(doc, "C# for Revit: Stacked dimensions"))
+            using (var transaction = new Transaction(doc, "C# for Revit: Pipe from Grid"))
             {
                 transaction.Start();
 
@@ -179,7 +180,7 @@ namespace CSharp_for_Revit.Commands.General
             // Same lines in Visual Studio's Output window (Debug.R25 + F5)
             foreach (var line in detailLines)
             {
-                Debug.WriteLine($"[Dimension1] {line}");
+                Debug.WriteLine($"[PipeFromGrid] {line}");
             }
 
             // Everything worked: no message, the dimensions on the screen are the answer
