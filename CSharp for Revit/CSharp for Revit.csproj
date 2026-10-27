@@ -13,6 +13,16 @@
 		<UseWindowsForms>true</UseWindowsForms>
 	</PropertyGroup>
 
+	<!-- Product identity: the DLL and its Addins folder are named "CodeLab" (same name as the Ribbon tab).
+	     RootNamespace stays CSharp_for_Revit: icons, tooltips and buttons are found by that prefix.
+	     Version: change it only here; Globals reads it back from the DLL. -->
+	<PropertyGroup>
+		<AssemblyName>CodeLab</AssemblyName>
+		<Product>CodeLab</Product>
+		<Company>CodeLab</Company>
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<None Remove="Resources\Icons16\*.png" />
 		<None Remove="Resources\Icons16\*.ico" />

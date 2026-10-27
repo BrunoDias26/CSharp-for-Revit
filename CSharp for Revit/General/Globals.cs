@@ -60,9 +60,23 @@ namespace CSharp_for_Revit.General
             // Revit username set on adling
             UsernameWindows = Environment.UserName;
 
-            AddinVersionNumber = "1.0.0";
+            // Version: read from the DLL, so it always matches <Version> in the .csproj (the single place to change it)
+            var assemblyVersion = Assembly.GetName().Version;
+
+            if (assemblyVersion is null)
+            {
+                AddinVersionNumber = "0.0.0";
+            }
+            else
+            {
+                // ToString(3) = "1.0.0" (major.minor.patch, without the 4th number)
+                AddinVersionNumber = assemblyVersion.ToString(3);
+            }
+
             AddinVersionName = "WIP";
-            AddinName = "C# for Revit";
+
+            // Product name = Ribbon tab name = .addin <Name> = DLL name ("CodeLab")
+            AddinName = "CodeLab";
             AddinGuid = "9699F8D5-7F3C-467F-AC8B-F1695DECC5BC";
         }
 
