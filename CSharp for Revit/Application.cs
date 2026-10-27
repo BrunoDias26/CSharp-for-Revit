@@ -46,10 +46,20 @@ namespace CSharp_for_Revit
 
             // Code logic here
             var Tab = Ribbon_Utilities.AddRibbonTab(uiCtrlApp, Globals.AddinName);
-            var Panel = Ribbon_Utilities.AddRibbonPanelToTab(uiCtrlApp, Globals.AddinName, "Test Panel");
-            var Button = Ribbon_Utilities.AddPushButtonToPanel(Panel, "Test Button", "CSharp_for_Revit.Commands.General.Command_Button",availability: AvailabilityNames.ZeroDoc);
 
-            var pulldown = Ribbon_Utilities.AddPulldownButtonToPanel(Panel, "Test Pulldown", "CSharp_for_Revit.Commands.General.Command_Pulldown");
+            // Create dimension panel (Bruno's own tools come first, on the left)
+            var panelDimension = Ribbon_Utilities.AddRibbonPanelToTab(uiCtrlApp, Globals.AddinName, "Dimension");
+
+            // Pipe from Grid directly on the panel (large icon, no pulldown)
+            Ribbon_Utilities.AddPushButtonToPanel(panelDimension, "Pipe from Grid", "CSharp_for_Revit.Commands.General.PipeFromGrid_Button", availability: AvailabilityNames.Project);
+
+            // Create course panel: everything below came from the course lessons and will be removed later
+            var panelCourse = Ribbon_Utilities.AddRibbonPanelToTab(uiCtrlApp, Globals.AddinName, "Course");
+
+            // Course: test buttons
+            var Button = Ribbon_Utilities.AddPushButtonToPanel(panelCourse, "Test Button", "CSharp_for_Revit.Commands.General.Command_Button",availability: AvailabilityNames.ZeroDoc);
+
+            var pulldown = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse, "Test Pulldown", "CSharp_for_Revit.Commands.General.Command_Pulldown");
             var pulldownBtn1 = Ribbon_Utilities.AddPushButtonToPulldown(pulldown, "Pulldown Button 1", "CSharp_for_Revit.Commands.General.Command_1Button");
             var pulldownBtn2 = Ribbon_Utilities.AddPushButtonToPulldown(pulldown, "Pulldown Button 2", "CSharp_for_Revit.Commands.General.Command_2Button");
             var pulldownBtn3 = Ribbon_Utilities.AddPushButtonToPulldown(pulldown, "Pulldown Button 3", "CSharp_for_Revit.Commands.General.Command_3Button");
@@ -58,7 +68,7 @@ namespace CSharp_for_Revit
             var stack2Data = Ribbon_Utilities.AddPulldownButtonData("Stack 2", "CSharp_for_Revit.Commands.General.Command_Stack2");
             var stack3Data = Ribbon_Utilities.AddPulldownButtonData("Stack 3", "CSharp_for_Revit.Commands.General.Command_Stack3");
 
-            var stack = Panel.AddStackedItems(stack1Data, stack2Data, stack3Data);
+            var stack = panelCourse.AddStackedItems(stack1Data, stack2Data, stack3Data);
             var pulldownStack1 = stack[0] as PulldownButton;
             var pulldownStack2 = stack[1] as PulldownButton;
             var pulldownStack3 = stack[2] as PulldownButton;
@@ -67,28 +77,28 @@ namespace CSharp_for_Revit
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownStack2, "Button 2", "CSharp_for_Revit.Commands.General.Command_Stack2");
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownStack3, "Button 3", "CSharp_for_Revit.Commands.General.Command_Stack3");
 
-            var splitButton = Ribbon_Utilities.AddSplitButtonToPanel(Panel, "Split 1");
+            var splitButton = Ribbon_Utilities.AddSplitButtonToPanel(panelCourse, "Split 1");
             var splitbutton1 = Ribbon_Utilities.AddPushButtonToPulldown(splitButton, "Split 1", "CSharp_for_Revit.Commands.General.Command_Split1");
             var splitbutton2 = Ribbon_Utilities.AddPushButtonToPulldown(splitButton, "Split 2", "CSharp_for_Revit.Commands.General.Command_Split2");
             var splitbutton3 = Ribbon_Utilities.AddPushButtonToPulldown(splitButton, "Split 3", "CSharp_for_Revit.Commands.General.Command_Split3");
 
-            // Create tools panel
-            var panelTools = Ribbon_Utilities.AddRibbonPanelToTab(uiCtrlApp, Globals.AddinName, "Tools");
+            // Course: a separator line between the test buttons and the lesson tools
+            panelCourse.AddSeparator();
 
             // Add revision pulldown
-            var pulldownRevision = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Revision", "CSharp_for_Revit.Commands.General.Revision_Button");
+            var pulldownRevision = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse,"Revision", "CSharp_for_Revit.Commands.General.Revision_Button");
 
             // Add pushbuttons to revision
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownRevision, "Revision1", "CSharp_for_Revit.Commands.General.Revision1_Button",availability: AvailabilityNames.Project);
 
             // Add worksets pulldown
-            var pulldownWorkset = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Workset", "CSharp_for_Revit.Commands.General.Workset_Button");
+            var pulldownWorkset = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse,"Workset", "CSharp_for_Revit.Commands.General.Workset_Button");
 
             // Add pushbuttons to workset
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownWorkset, "Create workset(s)", "CSharp_for_Revit.Commands.General.Workset1_Button", availability: AvailabilityNames.Workshared);
 
             // Add selection pulldown
-            var pulldownSelection = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Select", "CSharp_for_Revit.Commands.General.Select_Button");
+            var pulldownSelection = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse,"Select", "CSharp_for_Revit.Commands.General.Select_Button");
 
             // Add pushbuttons to selection
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownSelection, "Select titleblocks on sheets", "CSharp_for_Revit.Commands.General.Select1_Button", availability: AvailabilityNames.Selection_SheetsOnly);
@@ -96,25 +106,19 @@ namespace CSharp_for_Revit
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownSelection, "Select hidden elements", "CSharp_for_Revit.Commands.General.Select3_Button", availability: AvailabilityNames.Project);
 
             // Add import pulldown
-            var pulldownImport = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Import", "CSharp_for_Revit.Commands.General.Import_Button");
+            var pulldownImport = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse,"Import", "CSharp_for_Revit.Commands.General.Import_Button");
 
             // Add pushbuttons to import
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownImport, "Import sheets from Excel", "CSharp_for_Revit.Commands.General.Import1_Button", availability: AvailabilityNames.Project);
 
             // Add export pulldown
-            var pulldownExport = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Export", "CSharp_for_Revit.Commands.General.Export_Button");
+            var pulldownExport = Ribbon_Utilities.AddPulldownButtonToPanel(panelCourse,"Export", "CSharp_for_Revit.Commands.General.Export_Button");
 
             // Add pushbuttons to export
             Ribbon_Utilities.AddPushButtonToPulldown(pulldownExport, "Export sheets to PDF", "CSharp_for_Revit.Commands.General.Export1_Button", availability: AvailabilityNames.Project);
 
-            // Add dimension pulldown
-            var pulldownDimension = Ribbon_Utilities.AddPulldownButtonToPanel(panelTools, "Dimension", "CSharp_for_Revit.Commands.General.Dimension_Button");
-
-            // Add pushbuttons to dimension
-            Ribbon_Utilities.AddPushButtonToPulldown(pulldownDimension, "Pipe from Grid","CSharp_for_Revit.Commands.General.PipeFromGrid_Button", availability: AvailabilityNames.Project);
-
             // Testing button (directly on the panel, no pulldown)
-            Ribbon_Utilities.AddPushButtonToPanel(panelTools, "Testing", "CSharp_for_Revit.Commands.General.Testing_Button", availability: AvailabilityNames.Project);
+            Ribbon_Utilities.AddPushButtonToPanel(panelCourse, "Testing", "CSharp_for_Revit.Commands.General.Testing_Button", availability: AvailabilityNames.Project);
 
             return Result.Succeeded;
 
