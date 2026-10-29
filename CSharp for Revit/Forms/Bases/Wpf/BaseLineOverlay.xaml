@@ -8,13 +8,21 @@
     Background="Transparent"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
-    WindowStartupLocation="Manual">
+    WindowStartupLocation="Manual"
+    TextOptions.TextFormattingMode="Display"
+    UseLayoutRounding="True">
+
+    <!-- Sharp text (2026-10-29): a transparent window has no ClearType, so the small texts looked soft next to
+         Revit's. TextFormattingMode="Display" fits the letters to the pixel grid, UseLayoutRounding avoids
+         half-pixel positions, and the pill's shadow is kept OFF the text (see the pill below). -->
 
     <!-- Colors in one place (Windows 11 blue). #AARRGGBB: the first 2 digits are the opacity (26 = ~15%). -->
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#0078D4" />
         <SolidColorBrush x:Key="AccentFillBrush" Color="#260078D4" />
         <SolidColorBrush x:Key="PillBrush" Color="#E6202124" />
+        <SolidColorBrush x:Key="EdgeLabelBackgroundBrush" Color="#D9FFFFFF" />
+        <SolidColorBrush x:Key="EdgeLabelTextBrush" Color="#6B6B6B" />
     </Window.Resources>
 
     <Grid>
@@ -56,38 +64,55 @@
                      Stroke="{StaticResource AccentBrush}"
                      StrokeThickness="2"
                      Visibility="Collapsed" />
+
+            <!-- Label of the window's moving edge (3rd click only): the largest dimensions end there.
+                 Minimal: gray text on a soft white pad, so it reads over the drawing without a box -->
+            <Border x:Name="EdgeLabel"
+                    Background="{StaticResource EdgeLabelBackgroundBrush}"
+                    CornerRadius="3"
+                    Padding="4,1"
+                    IsHitTestVisible="False"
+                    Visibility="Collapsed">
+                <TextBlock Text="Dimensions align here"
+                           Foreground="{StaticResource EdgeLabelTextBrush}"
+                           FontSize="11" />
+            </Border>
         </Canvas>
 
         <!-- Hint "pill" at the bottom: step counter + text + ESC key.
              IsHitTestVisible=False: clicks go through it to the canvas -->
-        <Border HorizontalAlignment="Center"
-                VerticalAlignment="Bottom"
-                Margin="0,0,0,24"
-                Padding="8,6,14,6"
-                CornerRadius="16"
-                Background="{StaticResource PillBrush}"
-                IsHitTestVisible="False">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Bottom"
+              Margin="0,0,0,24"
+              IsHitTestVisible="False">
 
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" />
-            </Border.Effect>
+            <!-- Background + shadow only, behind the text. An Effect draws its content as a picture and blurs
+                 small text, so the shadow lives here and the text border below has no Effect. -->
+            <Border CornerRadius="16" Background="{StaticResource PillBrush}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" />
+                </Border.Effect>
+            </Border>
 
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- The pill's content: same size as the shadow border (both fill the same Grid cell) -->
+            <Border Padding="8,6,14,6" CornerRadius="16">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                <!-- Step counter: 1/3, 2/3, 3/3 -->
-                <Border Background="{StaticResource AccentBrush}" CornerRadius="9" Padding="7,1">
-                    <TextBlock x:Name="StepText" Foreground="White" FontSize="11" FontWeight="SemiBold" />
-                </Border>
+                    <!-- Step counter: 1/3, 2/3, 3/3 -->
+                    <Border Background="{StaticResource AccentBrush}" CornerRadius="9" Padding="7,1">
+                        <TextBlock x:Name="StepText" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                    </Border>
 
-                <TextBlock x:Name="HintText" Foreground="White" FontSize="12" Margin="10,0,14,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="HintText" Foreground="White" FontSize="12" Margin="10,0,14,0" VerticalAlignment="Center" />
 
-                <!-- The ESC key drawn as a small key -->
-                <Border BorderBrush="#99FFFFFF" BorderThickness="1" CornerRadius="4" Padding="5,0">
-                    <TextBlock Text="ESC" Foreground="White" FontSize="10" />
-                </Border>
+                    <!-- The ESC key drawn as a small key -->
+                    <Border BorderBrush="#99FFFFFF" BorderThickness="1" CornerRadius="4" Padding="5,0">
+                        <TextBlock Text="ESC" Foreground="White" FontSize="10" />
+                    </Border>
 
-                <TextBlock Text="cancel" Foreground="#CCFFFFFF" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
-        </Border>
+                    <TextBlock Text="cancel" Foreground="#CCFFFFFF" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

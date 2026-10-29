@@ -11,6 +11,7 @@ namespace CSharp_for_Revit.Forms.Bases
     /// clicks 1 and 2 draw a line locked to horizontal or vertical; click 3 opens a read window from that line.
     /// Look (2026-10-22): Windows 11 blue, rounded dashed window, round line ends, dots on the clicked points,
     /// and a hint "pill" with a step counter. Colors live in the XAML resources.
+    /// Step 3 (2026-10-29): a minimal gray "Dimensions align here" label follows the window's moving edge.
     /// Knows nothing about Revit: receives the screen rectangle in physical pixels and returns 3 screen points.
     /// Result: Tag = List&lt;object&gt; with 3 System.Windows.Point (physical screen pixels):
     /// line start, line end (already locked), window extent. DialogResult = true when finished, false on Esc.
@@ -27,6 +28,9 @@ namespace CSharp_for_Revit.Forms.Bases
 
         // One mouse wheel notch zooms in (or out) by this factor
         private const double ZOOM_STEP_FACTOR = 1.25;
+
+        // Space between the window's moving edge and its label, in WPF units (~pixels)
+        private const double EDGE_LABEL_GAP_UNITS = 6.0;
 
         /// <summary>
         /// Optional: called when the user turns the mouse wheel over the overlay (before the 1st click), so the caller can zoom
@@ -176,6 +180,7 @@ namespace CSharp_for_Revit.Forms.Bases
                 PlaceDot(EndDot, _lineEnd);
 
                 ReadWindow.Visibility = System.Windows.Visibility.Visible;
+                EdgeLabel.Visibility = System.Windows.Visibility.Visible;
                 DrawWindow(mouse);
                 _step = STEP_WINDOW;
             }
@@ -322,6 +327,59 @@ namespace CSharp_for_Revit.Forms.Bases
             System.Windows.Controls.Canvas.SetTop(ReadWindow, top);
             ReadWindow.Width = width;
             ReadWindow.Height = height;
+
+            PlaceEdgeLabel(mouse, left, top, width, height);
+        }
+
+        /// <summary>
+        /// Places the "Dimensions align here" label just outside the window's moving edge (the one that follows
+        /// the mouse), centered along it. The text stays horizontal, also when the edge is vertical.
+        /// </summary>
+        private void PlaceEdgeLabel(Point mouse, double left, double top, double width, double height)
+        {
+            // The label's size: Measure asks WPF "how big do you want to be?" (it works even before the first draw)
+            EdgeLabel.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            var labelWidth = EdgeLabel.DesiredSize.Width;
+            var labelHeight = EdgeLabel.DesiredSize.Height;
+
+            double labelLeft;
+            double labelTop;
+
+            if (_isHorizontal == true)
+            {
+                // Horizontal line: the moving edge is horizontal, at the mouse's Y. Label centered on the window's width
+                labelLeft = left + (width - labelWidth) / 2.0;
+
+                if (mouse.Y >= _lineStart.Y)
+                {
+                    // Window grows down: label below the edge
+                    labelTop = mouse.Y + EDGE_LABEL_GAP_UNITS;
+                }
+                else
+                {
+                    // Window grows up: label above the edge
+                    labelTop = mouse.Y - EDGE_LABEL_GAP_UNITS - labelHeight;
+                }
+            }
+            else
+            {
+                // Vertical line: the moving edge is vertical, at the mouse's X. Label centered on the window's height
+                labelTop = top + (height - labelHeight) / 2.0;
+
+                if (mouse.X >= _lineStart.X)
+                {
+                    // Window grows right: label to the right of the edge
+                    labelLeft = mouse.X + EDGE_LABEL_GAP_UNITS;
+                }
+                else
+                {
+                    // Window grows left: label to the left of the edge
+                    labelLeft = mouse.X - EDGE_LABEL_GAP_UNITS - labelWidth;
+                }
+            }
+
+            System.Windows.Controls.Canvas.SetLeft(EdgeLabel, labelLeft);
+            System.Windows.Controls.Canvas.SetTop(EdgeLabel, labelTop);
         }
 
         /// <summary>
