@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.37314.3 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp for Revit", "CSharp for Revit\CSharp for Revit.csproj", "{A193C34B-6788-4021-8429-30E5D13748F2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeLab", "CodeLab\CodeLab.csproj", "{A193C34B-6788-4021-8429-30E5D13748F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
