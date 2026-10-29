@@ -7,6 +7,18 @@ namespace CSharp_for_Revit.Utilities
     /// </summary>
     public static class FabricationPart_Utilities
     {
+        #region Constants
+
+        /// <summary>
+        /// Angle tolerance, in degrees, to call a part EXACTLY parallel to a screen axis.
+        /// Much smaller than View_Utilities.ORIENTATION_TOLERANCE_DEGREES (1°): Revit only accepts exactly parallel
+        /// lines in a dimension. Pipes 0.0019° and 0.0044° off broke two dimensions with "The References of the
+        /// highlighted Dimension are no longer parallel"; the accepted ones were below 0.00005° (measured 2026-10-28).
+        /// </summary>
+        public const double EXACT_PARALLEL_TOLERANCE_DEGREES = 0.0001;
+
+        #endregion
+
         #region Get
 
         /// <summary>
@@ -274,6 +286,50 @@ namespace CSharp_for_Revit.Utilities
             }
 
             return touching;
+        }
+
+        /// <summary>
+        /// Tells if a part is EXACTLY parallel to an axis of the screen (not just within the 1° orientation tolerance).
+        /// Used to choose the dimension reference: exactly parallel = its centerline (a line);
+        /// almost parallel = a point, because Revit refuses a line that is not exactly parallel.
+        /// </summary>
+        /// <param name="info">The part's record card (needs StartPointInView and EndPointInView).</param>
+        /// <param name="axis">Vertical (the part should run up/down the screen) or Horizontal (left/right).</param>
+        /// <returns>True if the angle to the axis is within EXACT_PARALLEL_TOLERANCE_DEGREES;
+        /// false otherwise, or if info has no points or axis is not Vertical/Horizontal.</returns>
+        public static bool IsExactlyParallel(FabPartInfo info, OrientationInView axis)
+        {
+            if (info is null || info.StartPointInView is null || info.EndPointInView is null) { return false; }
+
+            var deltaX = Math.Abs(info.EndPointInView.X - info.StartPointInView.X);
+            var deltaY = Math.Abs(info.EndPointInView.Y - info.StartPointInView.Y);
+
+            // "sideways" = how much the pipe drifts off the axis; "along" = how much it runs on it
+            double sideways;
+            double along;
+
+            if (axis == OrientationInView.Vertical)
+            {
+                sideways = deltaX;
+                along = deltaY;
+            }
+            else if (axis == OrientationInView.Horizontal)
+            {
+                sideways = deltaY;
+                along = deltaX;
+            }
+            else
+            {
+                return false;
+            }
+
+            // No length along the axis: it is not a pipe on that axis at all
+            if (along < 1e-9) { return false; }
+
+            // Math.Atan works in radians: * 180 / PI turns it into degrees
+            var angleDegrees = Math.Atan(sideways / along) * 180.0 / Math.PI;
+
+            return angleDegrees <= EXACT_PARALLEL_TOLERANCE_DEGREES;
         }
 
         /// <summary>

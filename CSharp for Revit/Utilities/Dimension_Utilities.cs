@@ -91,6 +91,60 @@ namespace CSharp_for_Revit.Utilities
         }
 
         /// <summary>
+        /// Gets the reference of the centerline end NEAREST to the dimension line, to be used by a dimension.
+        /// Made for pipes that are almost parallel (up to 1°): Revit refuses their line in a dimension,
+        /// but accepts a point. The two ends give different values when the pipe is off, so the end on the side
+        /// of the dimension line is the one the reader expects.
+        /// </summary>
+        /// <param name="element">A pipe or fabrication part.</param>
+        /// <param name="view">The view where the dimension will be created.</param>
+        /// <param name="gridOrientation">Vertical (the dimension measures X) or Horizontal (it measures Y).</param>
+        /// <param name="linePositionInView">Where the dimension line is, on the screen axis across it
+        /// (Y for dimensions that measure X, X for dimensions that measure Y), in feet.</param>
+        /// <returns>The end point reference, or null if not found or if it points to another element.</returns>
+        public static Reference GetCenterlineNearestEndPointReference(Element element, View view, OrientationInView gridOrientation, double linePositionInView)
+        {
+            var centerline = FindCenterlineCurve(element, view, out var cameFromInstance);
+            if (centerline is null) { return null; }
+
+            var start = View_Utilities.ToViewCoordinates(centerline.GetEndPoint(0), view);
+            var end = View_Utilities.ToViewCoordinates(centerline.GetEndPoint(1), view);
+
+            // Distance to the dimension line, measured across it:
+            // Y for dimensions that measure X, X for dimensions that measure Y
+            double startDistance;
+            double endDistance;
+
+            if (gridOrientation == OrientationInView.Vertical)
+            {
+                startDistance = Math.Abs(start.Y - linePositionInView);
+                endDistance = Math.Abs(end.Y - linePositionInView);
+            }
+            else
+            {
+                startDistance = Math.Abs(start.X - linePositionInView);
+                endDistance = Math.Abs(end.X - linePositionInView);
+            }
+
+            // 0 = start point of the centerline, 1 = end point
+            int nearestIndex;
+
+            if (startDistance <= endDistance)
+            {
+                nearestIndex = 0;
+            }
+            else
+            {
+                nearestIndex = 1;
+            }
+
+            var endPointReference = centerline.GetEndPointReference(nearestIndex);
+            if (endPointReference is null) { return null; }
+
+            return QualifyReference(endPointReference, element, cameFromInstance);
+        }
+
+        /// <summary>
         /// Finds the centerline of an element: the longest curve with a reference in its geometry.
         /// The centerline is invisible geometry, so it needs IncludeNonVisibleObjects.
         /// </summary>
@@ -289,8 +343,12 @@ namespace CSharp_for_Revit.Utilities
 
             foreach (var info in ladder.Parts)
             {
-                // Pipes on the screen: the centerline (a line). Risers: a point of the centerline,
-                // because in plan the line points out of the screen; if the point fails, try the line.
+                // Three cases:
+                // - Risers: a point of the centerline, because in plan the line points out of the screen;
+                //   if the point fails, try the line.
+                // - Pipes EXACTLY parallel to the grids: the centerline (a line).
+                // - Pipes almost parallel (up to 1°): the centerline end nearest to the dimension line. Revit refuses
+                //   a line that is not exactly parallel, and that breaks the WHOLE dimension (seen on 2026-10-28).
                 Reference reference;
 
                 if (info.Orientation == OrientationInView.Riser)
@@ -302,9 +360,14 @@ namespace CSharp_for_Revit.Utilities
                         reference = GetCenterlineReference(info.Part, view);
                     }
                 }
-                else
+                else if (FabricationPart_Utilities.IsExactlyParallel(info, ladder.GridOrientation) == true)
                 {
                     reference = GetCenterlineReference(info.Part, view);
+                }
+                else
+                {
+                    // No fallback to the line here: it would break the whole dimension again
+                    reference = GetCenterlineNearestEndPointReference(info.Part, view, ladder.GridOrientation, linePositionInView);
                 }
 
                 if (reference is null)
