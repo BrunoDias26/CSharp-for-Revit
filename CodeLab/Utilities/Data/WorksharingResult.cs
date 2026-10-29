@@ -1,4 +1,4 @@
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     // This is a class to make WorksharingResult objects
     public class WorksharingResult

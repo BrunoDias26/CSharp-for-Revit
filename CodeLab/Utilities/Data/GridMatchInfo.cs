@@ -1,4 +1,4 @@
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// The answer to "which grid is nearest to this part?": the grid, the distance and the side, together.

@@ -1,6 +1,6 @@
 using View = Autodesk.Revit.DB.View;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// Methods about how a view is oriented on the user's screen.

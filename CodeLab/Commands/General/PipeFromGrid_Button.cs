@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
-using CSharp_for_Revit.Forms;
-using CSharp_for_Revit.Utilities;
+using CodeLab.Forms;
+using CodeLab.Utilities;
 
-namespace CSharp_for_Revit.Commands.General
+namespace CodeLab.Commands.General
 {
     /// <summary>
     /// "Pipe from Grid": stacked baseline dimensions for fabrication pipes (CID 2041), from the nearest grid.

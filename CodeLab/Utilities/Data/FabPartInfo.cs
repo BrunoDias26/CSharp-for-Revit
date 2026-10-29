@@ -1,4 +1,4 @@
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// The "record card" of one fabrication part, as seen in one view.

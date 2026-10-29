@@ -4,7 +4,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
-namespace CSharp_for_Revit.Forms.Bases
+namespace CodeLab.Forms.Bases
 {
     /// <summary>
     /// Transparent overlay placed over the Revit view, with live preview:

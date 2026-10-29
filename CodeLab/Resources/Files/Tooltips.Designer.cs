@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace CSharp_for_Revit.Resources.Files {
+namespace CodeLab.Resources.Files {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace CSharp_for_Revit.Resources.Files {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("CSharp_for_Revit.Resources.Files.Tooltips", typeof(Tooltips).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("CodeLab.Resources.Files.Tooltips", typeof(Tooltips).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

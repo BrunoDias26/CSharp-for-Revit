@@ -1,4 +1,4 @@
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// Methods about MEP connectors. Works for any MEP element: fabrication parts, pipes, fittings, accessories.

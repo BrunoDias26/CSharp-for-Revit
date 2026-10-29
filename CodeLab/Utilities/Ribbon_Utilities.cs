@@ -3,9 +3,9 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Autodesk.Revit.UI;
-using CSharp_for_Revit.General;
+using CodeLab.General;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     public class Ribbon_Utilities
     {
@@ -137,7 +137,7 @@ namespace CSharp_for_Revit.Utilities
         /// </summary>
         /// <param name="panel">The target `RibbonPanel` to which the push button will be added.</param>
         /// <param name="buttonName">The visible label for the button.</param>
-        /// <param name="ClassName">The fully-qualified command class name (for example: `CSharp_for_Revit.Commands.General.MyCommand`)</param>
+        /// <param name="ClassName">The fully-qualified command class name (for example: `CodeLab.Commands.General.MyCommand`)</param>
         /// <param name="availability">Optional availability class name (use Availability.AvailabilityNames). If null, Revit's default is used.</param>
         /// <returns></returns>
         public static PushButton AddPushButtonToPanel(RibbonPanel panel, string buttonName, string ClassName, string availability = null)
@@ -178,7 +178,7 @@ namespace CSharp_for_Revit.Utilities
         /// </summary>
         /// <param name="panel">The target `RibbonPanel` to which the pulldown will be added.</param>
         /// <param name="buttonName">The visible label for the pulldown.</param>
-        /// <param name="ClassName">The fully-qualified class name used to derive the pulldown internal name (for example: `CSharp_for_Revit.Commands.General.Command_Pulldown`).</param>
+        /// <param name="ClassName">The fully-qualified class name used to derive the pulldown internal name (for example: `CodeLab.Commands.General.Command_Pulldown`).</param>
         /// <returns>The created `PulldownButton` on success; otherwise `null`.</returns>
         public static PulldownButton AddPulldownButtonToPanel(RibbonPanel panel, string buttonName, string ClassName)
         {
@@ -233,7 +233,7 @@ namespace CSharp_for_Revit.Utilities
         /// </summary>
         /// <param name="pulldownButton">The `PulldownButton` to which the new push button will be added.</param>
         /// <param name="buttonName">The visible label for the new push button.</param>
-        /// <param name="className">The fully-qualified command class name (for example: `CSharp_for_Revit.Commands.General.MyCommand`).</param>
+        /// <param name="className">The fully-qualified command class name (for example: `CodeLab.Commands.General.MyCommand`).</param>
         /// <param name="availability">Optional availability class name (use Availability.AvailabilityNames). If null, Revit's default is used.</param>
         /// <returns>The created `PushButton` on success; otherwise `null`.</returns>
         public static PushButton AddPushButtonToPulldown(PulldownButton pulldownButton, string buttonName, string className, string availability = null)
@@ -292,7 +292,7 @@ namespace CSharp_for_Revit.Utilities
         // Method to get base name
         public static string CommandToBaseName(string commandName)
         {
-            return commandName.Replace("CSharp_for_Revit.Commands.General.", "");
+            return commandName.Replace("CodeLab.Commands.General.", "");
         }
 
 
@@ -317,7 +317,7 @@ namespace CSharp_for_Revit.Utilities
 
         public static ImageSource GetIcon(string baseName, int resolution = 32)
         {
-            var resourcePath = $"CSharp_for_Revit.Resources.Icons{resolution}.{baseName}{resolution}.png";
+            var resourcePath = $"CodeLab.Resources.Icons{resolution}.{baseName}{resolution}.png";
 
             using (var stream = Globals.Assembly.GetManifestResourceStream(resourcePath))
             {

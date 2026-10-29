@@ -1,6 +1,6 @@
 using View = Autodesk.Revit.DB.View;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     public static class Element_Utilities
     {

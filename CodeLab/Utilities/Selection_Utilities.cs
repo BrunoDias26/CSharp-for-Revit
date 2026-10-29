@@ -1,7 +1,7 @@
 using Autodesk.Revit.UI.Selection;
 using View = Autodesk.Revit.DB.View;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     // Selection filters (ISelectionFilter) tell Revit WHICH elements the user is allowed to pick
     // during PickObjects. Revit calls AllowElement for every element under the mouse while the user

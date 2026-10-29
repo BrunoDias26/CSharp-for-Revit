@@ -1,6 +1,6 @@
 using View = Autodesk.Revit.DB.View;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// Methods about MEP Fabrication pipework parts (pipes, fittings, valves...): collect, describe and filter.

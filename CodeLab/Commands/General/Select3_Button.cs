@@ -1,9 +1,9 @@
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
-using CSharp_for_Revit.Forms;
-using CSharp_for_Revit.Utilities;
+using CodeLab.Forms;
+using CodeLab.Utilities;
 
-namespace CSharp_for_Revit.Commands.General
+namespace CodeLab.Commands.General
 {
     /// <summary>
     ///     Lets the user pick only elements hidden in the active view, then selects them

@@ -1,4 +1,4 @@
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// CADmep pattern numbers (CID) of pipework parts, from Autodesk's Fabrication CID table.

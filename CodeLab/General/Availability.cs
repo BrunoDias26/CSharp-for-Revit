@@ -1,6 +1,6 @@
 using Autodesk.Revit.UI;
 
-namespace CSharp_for_Revit.General
+namespace CodeLab.General
 {
     // Availability classes tell Revit WHEN a push button is enabled or grayed out.
     // Revit calls IsCommandAvailable very often (every time the UI refreshes, e.g. a new selection),
@@ -14,7 +14,7 @@ namespace CSharp_for_Revit.General
         /// </summary>
         public static class AvailabilityNames
         {
-            // typeof(...).FullName builds the name for us, e.g. "CSharp_for_Revit.General.Availability+Project".
+            // typeof(...).FullName builds the name for us, e.g. "CodeLab.General.Availability+Project".
             public static string Disabled { get { return typeof(Availability.Disabled).FullName; } }
             public static string ZeroDoc { get { return typeof(Availability.ZeroDoc).FullName; } }
             public static string Project { get { return typeof(Availability.Project).FullName; } }

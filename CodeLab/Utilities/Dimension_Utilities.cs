@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using View = Autodesk.Revit.DB.View;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     /// <summary>
     /// Methods about dimensions: dimension types, centerline references, ladders (grouping) and creation.

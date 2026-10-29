@@ -6,7 +6,7 @@ using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.UI;
 using Assembly = System.Reflection.Assembly;
 
-namespace CSharp_for_Revit.General
+namespace CodeLab.General
 {
     public static class Globals
     {

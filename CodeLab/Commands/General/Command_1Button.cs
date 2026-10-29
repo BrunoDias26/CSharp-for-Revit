@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.UI;
 
-namespace CSharp_for_Revit.Commands.General
+namespace CodeLab.Commands.General
 {
     [Transaction(TransactionMode.Manual)]
     public class Command_1Button : IExternalCommand

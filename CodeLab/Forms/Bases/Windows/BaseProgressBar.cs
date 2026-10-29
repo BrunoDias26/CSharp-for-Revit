@@ -1,7 +1,7 @@
 using Form = System.Windows.Forms.Form;
 using FormApplication = System.Windows.Forms.Application;
 
-namespace CSharp_for_Revit.Forms.Bases
+namespace CodeLab.Forms.Bases
 {
     /// <summary>
     /// A non-modal progress bar form with a Cancel button, used while a task runs.

@@ -1,15 +1,15 @@
 ﻿using System.IO;
 using Autodesk.Revit.UI;
-using CSharp_for_Revit.General;
+using CodeLab.General;
 using Form = System.Windows.Forms.Form;
 
-namespace CSharp_for_Revit.Utilities
+namespace CodeLab.Utilities
 {
     public static class File_Utilities
     {
         public static void SetFormIcon(Form form, string iconPath = null)
         {
-             iconPath ??= "CSharp_for_Revit.Resources.Icons16.IconList16.ico";
+             iconPath ??= "CodeLab.Resources.Icons16.IconList16.ico";
 
             using (Stream stream = Globals.Assembly.GetManifestResourceStream(iconPath))
             {

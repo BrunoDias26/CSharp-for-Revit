@@ -6,7 +6,7 @@ using System.Windows.Navigation;
 using Autodesk.Revit.UI;
 
 // Namespace for all things form related
-namespace CSharp_for_Revit.Forms
+namespace CodeLab.Forms
 {
     // This is a static class, we will use it later
     public static class Custom

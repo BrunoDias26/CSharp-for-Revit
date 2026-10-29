@@ -9,12 +9,12 @@
 		<EnableDynamicLoading>true</EnableDynamicLoading>
 		<Configurations>Debug.R23;Debug.R24;Debug.R25;Debug.R26;Debug.R27</Configurations>
 		<Configurations>$(Configurations);Release.R23;Release.R24;Release.R25;Release.R26;Release.R27</Configurations>
-		<RootNamespace>CSharp_for_Revit</RootNamespace>
+		<RootNamespace>CodeLab</RootNamespace>
 		<UseWindowsForms>true</UseWindowsForms>
 	</PropertyGroup>
 
-	<!-- Product identity: the DLL and its Addins folder are named "CodeLab" (same name as the Ribbon tab).
-	     RootNamespace stays CSharp_for_Revit: icons, tooltips and buttons are found by that prefix.
+	<!-- Product identity: one name everywhere ("CodeLab"): Ribbon tab, .addin, DLL, Addins folder and RootNamespace.
+	     Icons, tooltips and buttons are found by the "CodeLab." prefix (resource names and class name strings).
 	     Version: change it only here; Globals reads it back from the DLL. -->
 	<PropertyGroup>
 		<AssemblyName>CodeLab</AssemblyName>

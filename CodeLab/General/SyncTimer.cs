@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB.Events;
-using CSharp_for_Revit.Forms;
+using CodeLab.Forms;
 
-namespace CSharp_for_Revit.General
+namespace CodeLab.General
 {
     /// <summary>
     /// The sync timer informs the user of total sync times.
